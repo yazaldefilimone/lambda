@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use crate::source::span::Span;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]

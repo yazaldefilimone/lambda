@@ -45,6 +45,7 @@ impl<'a> Cursor<'a> {
     self.position >= self.source.len()
   }
 
+  #[allow(dead_code)]
   pub fn slice(&self, start: usize, end: usize) -> &[u8] {
     &self.source[start..end]
   }

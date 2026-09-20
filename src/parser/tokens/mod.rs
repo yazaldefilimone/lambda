@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use crate::source::span::Span;
 mod display;
 pub mod kind;

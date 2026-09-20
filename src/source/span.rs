@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use crate::source::file::FileId;
 use std::ops::Add;
 

@@ -31,6 +31,7 @@ impl SourceMap {
     self.files.get(id.usize())
   }
 
+  #[allow(dead_code)]
   pub fn slice(&self, span: Span) -> &str {
     let file = self.get(span.file).unwrap();
     &file.source[span.start as usize..span.end as usize]

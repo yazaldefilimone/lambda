@@ -66,6 +66,7 @@ impl Values {
     value_id
   }
 
+  #[allow(dead_code)]
   pub fn add_list(&mut self, items: Vec<ValueId>) -> ValueId {
     let list_value = ListValue { items };
     let id = self.lists.add(list_value);

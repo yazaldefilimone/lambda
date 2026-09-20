@@ -10,6 +10,7 @@ impl FileId {
 }
 
 pub struct SourceFile {
+  #[allow(dead_code)]
   pub id: FileId,
   pub path: PathBuf,
   pub source: Arc<str>,
@@ -36,6 +37,7 @@ impl SourceFile {
     self.lines.get(line).copied()
   }
 
+  #[allow(dead_code)]
   pub fn line_count(&self) -> usize {
     self.lines.len()
   }

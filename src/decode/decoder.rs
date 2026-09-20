@@ -34,10 +34,12 @@ impl<'a> Decoder<'a> {
     printed
   }
 
+  #[allow(dead_code)]
   pub fn scott(&mut self, _term: TermId) -> result::Result<()> {
     todo!("'scott' encoding not yet supported")
   }
 
+  #[allow(dead_code)]
   pub fn boehm(&mut self, _term: TermId) -> result::Result<()> {
     todo!("'boehm' encoding not yet supported")
   }

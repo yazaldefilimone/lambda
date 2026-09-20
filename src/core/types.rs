@@ -10,6 +10,7 @@ pub type NamedTypeId = Id<NamedType>;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum TypeId {
+  #[allow(dead_code)]
   Variable(TypeVariableId),
   Function(FunctionTypeId),
   Apply(ApplyTypeId),
@@ -34,6 +35,7 @@ impl Type {
     }
   }
 
+  #[allow(dead_code)]
   pub fn add_variable(&mut self, value: TypeVariable) -> TypeId {
     let index = self.variables.add(value);
     TypeId::Variable(index)

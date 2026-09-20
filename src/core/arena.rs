@@ -58,14 +58,17 @@ impl<T> Arena<T> {
     &self.items[id.index() as usize]
   }
 
+  #[allow(dead_code)]
   pub fn get_mut(&mut self, id: Id<T>) -> &mut T {
     &mut self.items[id.index() as usize]
   }
 
+  #[allow(dead_code)]
   pub fn len(&self) -> usize {
     self.items.len()
   }
 
+  #[allow(dead_code)]
   pub fn is_empty(&self) -> bool {
     self.items.is_empty()
   }

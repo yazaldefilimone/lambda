@@ -4,6 +4,7 @@ use std::path::PathBuf;
 #[derive(Debug, Clone)]
 pub struct Options {
   pub input: PathBuf,
+  #[allow(dead_code)]
   pub output: Option<PathBuf>,
   pub check: bool,
   pub emit: Option<Emit>,
@@ -13,10 +14,12 @@ pub struct Options {
   pub limit: usize,
   pub verbose: bool,
   pub quiet: bool,
+  #[allow(dead_code)]
   pub no_color: bool,
 }
 
 impl Options {
+  #[allow(dead_code)]
   pub fn new(input: PathBuf) -> Self {
     Self {
       input,

@@ -9,8 +9,6 @@ pub struct Options {
   pub collapse: bool,
 }
 
-pub type PrintOptions = Options;
-
 impl Default for Options {
   fn default() -> Self {
     Self { collapse: false }
@@ -27,6 +25,7 @@ impl<'a> Printer<'a> {
     Self { ctx, options: Options::default() }
   }
 
+  #[allow(dead_code)]
   pub fn with_options(ctx: &'a Context, options: Options) -> Self {
     Self { ctx, options }
   }
@@ -37,6 +36,7 @@ impl<'a> Printer<'a> {
     out
   }
 
+  #[allow(dead_code)]
   pub fn print_type(&self, type_id: TypeId) -> String {
     let mut out = String::new();
     self.format_type(type_id, &mut out);

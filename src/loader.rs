@@ -28,6 +28,7 @@ impl Loader {
     Ok(file_id)
   }
 
+  #[allow(dead_code)]
   pub fn add_virtual(&mut self, name: &str, content: String) -> FileId {
     self.sources.add_file(PathBuf::from(name), content)
   }
