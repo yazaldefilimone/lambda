@@ -10,20 +10,20 @@ pub struct TermStats {
 
 impl TermStats {
   pub fn compute(term: TermId, ctx: &Context) -> Self {
-    match term {
-      TermId::Variable(_) => {
+    match term.kind() {
+      crate::core::TermKind::Variable(_) => {
         let nodes = 1;
         let depth = 1;
         Self { nodes, depth }
       },
-      TermId::Lambda(id) => {
+      crate::core::TermKind::Lambda(id) => {
         let lambda = ctx.terms.lambdas.get(id);
         let body_stats = Self::compute(lambda.body, ctx);
         let nodes = 1 + body_stats.nodes;
         let depth = 1 + body_stats.depth;
         Self { nodes, depth }
       },
-      TermId::Apply(id) => {
+      crate::core::TermKind::Apply(id) => {
         let apply = ctx.terms.applies.get(id);
         let function_stats = Self::compute(apply.function, ctx);
         let argument_stats = Self::compute(apply.argument, ctx);

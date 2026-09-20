@@ -1,6 +1,6 @@
 use crate::{
   context::Context,
-  core::{Apply, ApplyId, Lambda, LambdaId, TermId, VariableId},
+  core::{Apply, ApplyId, Lambda, LambdaId, TermId, TermKind, VariableId},
   evaluator::alpha,
   symbol::SymbolId,
 };
@@ -11,10 +11,10 @@ pub fn substitute(
   variable: SymbolId,
   replacement: TermId,
 ) -> TermId {
-  match term {
-    TermId::Variable(id) => substitute_variable(ctx, id, variable, replacement),
-    TermId::Lambda(id) => substitute_lambda(ctx, id, variable, replacement),
-    TermId::Apply(id) => substitute_apply(ctx, id, variable, replacement),
+  match term.kind() {
+    TermKind::Variable(id) => substitute_variable(ctx, id, variable, replacement),
+    TermKind::Lambda(id) => substitute_lambda(ctx, id, variable, replacement),
+    TermKind::Apply(id) => substitute_apply(ctx, id, variable, replacement),
   }
 }
 
@@ -28,7 +28,7 @@ fn substitute_variable(
   if current.name == variable {
     replacement
   } else {
-    let term = TermId::Variable(id);
+    let term = TermId::variable(id);
     term
   }
 }
@@ -43,7 +43,7 @@ fn substitute_apply(
   let function = substitute(ctx, apply.function, variable, replacement);
   let argument = substitute(ctx, apply.argument, variable, replacement);
   if function == apply.function && argument == apply.argument {
-    let term = TermId::Apply(id);
+    let term = TermId::apply(id);
     return term;
   }
   let new_apply = Apply { function, argument };
@@ -59,7 +59,7 @@ fn substitute_lambda(
 ) -> TermId {
   let lambda = *ctx.terms.lambdas.get(id);
   if lambda.parameter == variable {
-    let term = TermId::Lambda(id);
+    let term = TermId::lambda(id);
     return term;
   }
 
@@ -75,7 +75,7 @@ fn substitute_lambda(
 
   let body = substitute(ctx, lambda.body, variable, replacement);
   if body == lambda.body {
-    let term = TermId::Lambda(id);
+    let term = TermId::lambda(id);
     return term;
   }
 
@@ -85,12 +85,12 @@ fn substitute_lambda(
 }
 
 pub fn has_free_variable(ctx: &Context, term: TermId, variable: SymbolId) -> bool {
-  match term {
-    TermId::Variable(id) => {
+  match term.kind() {
+    TermKind::Variable(id) => {
       let variable_entry = ctx.terms.variables.get(id);
       variable_entry.name == variable
     },
-    TermId::Apply(id) => {
+    TermKind::Apply(id) => {
       let apply = ctx.terms.applies.get(id);
       let in_function = has_free_variable(ctx, apply.function, variable);
       if in_function {
@@ -99,7 +99,7 @@ pub fn has_free_variable(ctx: &Context, term: TermId, variable: SymbolId) -> boo
       let in_argument = has_free_variable(ctx, apply.argument, variable);
       in_argument
     },
-    TermId::Lambda(id) => {
+    TermKind::Lambda(id) => {
       let lambda = ctx.terms.lambdas.get(id);
       if lambda.parameter == variable {
         return false;

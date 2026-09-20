@@ -1,6 +1,6 @@
 use crate::{
   context::Context,
-  core::{Apply, Lambda, TermId},
+  core::{Apply, Lambda, TermId, TermKind},
   evaluator::{beta, strategy::StrategyOptions},
   result,
 };
@@ -10,8 +10,8 @@ pub fn reduce(
   ctx: &mut Context,
   options: &StrategyOptions,
 ) -> result::Result<Option<TermId>> {
-  match term {
-    TermId::Apply(id) => {
+  match term.kind() {
+    TermKind::Apply(id) => {
       let apply = *ctx.terms.applies.get(id);
 
       let function_step = reduce(apply.function, ctx, options)?;
@@ -30,7 +30,7 @@ pub fn reduce(
         return Ok(result);
       }
 
-      if let TermId::Lambda(lambda_id) = apply.function {
+      if let Some(lambda_id) = apply.function.as_lambda() {
         let reduced = beta::reduce(ctx, lambda_id, apply.argument)?;
         let result = Some(reduced);
         return Ok(result);
@@ -39,7 +39,7 @@ pub fn reduce(
       let result = None;
       Ok(result)
     },
-    TermId::Lambda(id) => {
+    TermKind::Lambda(id) => {
       if options.lazy {
         let result = None;
         return Ok(result);
@@ -57,7 +57,7 @@ pub fn reduce(
       let result = None;
       Ok(result)
     },
-    TermId::Variable(_) => {
+    TermKind::Variable(_) => {
       let result = None;
       Ok(result)
     },

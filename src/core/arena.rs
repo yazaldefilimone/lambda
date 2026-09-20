@@ -45,7 +45,11 @@ impl<T> Id<T> {
 
 impl<T> Arena<T> {
   pub fn new() -> Self {
-    Self { items: Vec::new() }
+    Self::with_capacity(1024)
+  }
+
+  pub fn with_capacity(capacity: usize) -> Self {
+    Self { items: Vec::with_capacity(capacity) }
   }
 
   pub fn add(&mut self, value: T) -> Id<T> {

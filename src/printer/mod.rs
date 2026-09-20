@@ -48,12 +48,12 @@ impl<'a> Printer<'a> {
   }
 
   fn format_term(&self, term_id: TermId, out: &mut String) {
-    match term_id {
-      TermId::Variable(var_id) => {
+    match term_id.kind() {
+      crate::core::TermKind::Variable(var_id) => {
         let var = &self.ctx.terms.variables[var_id];
         out.push_str(self.resolve_symbol(var.name));
       },
-      TermId::Lambda(lam_id) => {
+      crate::core::TermKind::Lambda(lam_id) => {
         if self.options.collapse {
           self.format_collapsed_lambda(lam_id, out);
         } else {
@@ -64,7 +64,7 @@ impl<'a> Printer<'a> {
           self.format_term(lam.body, out);
         }
       },
-      TermId::Apply(apply_id) => {
+      crate::core::TermKind::Apply(apply_id) => {
         self.format_apply(apply_id, out);
       },
     }
@@ -82,15 +82,12 @@ impl<'a> Printer<'a> {
       self.format_parameter(lam.parameter, lam.annotation, out);
       first = false;
 
-      match lam.body {
-        TermId::Lambda(next_id) => {
-          current_id = next_id;
-        },
-        other => {
-          out.push_str(". ");
-          self.format_term(other, out);
-          break;
-        },
+      if let Some(next_id) = lam.body.as_lambda() {
+        current_id = next_id;
+      } else {
+        out.push_str(". ");
+        self.format_term(lam.body, out);
+        break;
       }
     }
   }
@@ -106,28 +103,22 @@ impl<'a> Printer<'a> {
   fn format_apply(&self, apply_id: ApplyId, out: &mut String) {
     let apply = &self.ctx.terms.applies[apply_id];
 
-    match apply.function {
-      TermId::Lambda(_) => {
-        out.push('(');
-        self.format_term(apply.function, out);
-        out.push(')');
-      },
-      _ => {
-        self.format_term(apply.function, out);
-      },
+    if apply.function.is_lambda() {
+      out.push('(');
+      self.format_term(apply.function, out);
+      out.push(')');
+    } else {
+      self.format_term(apply.function, out);
     }
 
     out.push(' ');
 
-    match apply.argument {
-      TermId::Variable(_) => {
-        self.format_term(apply.argument, out);
-      },
-      _ => {
-        out.push('(');
-        self.format_term(apply.argument, out);
-        out.push(')');
-      },
+    if apply.argument.is_variable() {
+      self.format_term(apply.argument, out);
+    } else {
+      out.push('(');
+      self.format_term(apply.argument, out);
+      out.push(')');
     }
   }
 
