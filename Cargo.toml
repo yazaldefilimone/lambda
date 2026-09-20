@@ -1,0 +1,16 @@
+[package]
+name = "lambdac"
+version = "0.1.0"
+edition = "2024"
+description = "An experimental lambda runtime"
+authors = ["Yazalde Filimone <yazaldefilimon@gmail.com>"]
+repository = "https://github.com/yazaldefilimone/lambda"
+license = "Apache-2.0"
+
+[[bin]]
+name = "lambdac"
+path = "src/main.rs"
+
+[dependencies]
+clap = { version = "4.5.9", features = ["derive"] }
+rustc-hash = "2.1.0"
