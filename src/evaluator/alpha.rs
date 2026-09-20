@@ -15,7 +15,13 @@ pub fn rename(ctx: &mut Context, term: TermId, from: SymbolId, to: SymbolId) -> 
   }
 }
 
-fn rename_variable(ctx: &mut Context, term: TermId, id: VariableId, from: SymbolId, to: SymbolId) -> TermId {
+fn rename_variable(
+  ctx: &mut Context,
+  term: TermId,
+  id: VariableId,
+  from: SymbolId,
+  to: SymbolId,
+) -> TermId {
   let variable = ctx.terms.variables.get(id);
   if variable.name == from {
     let new_variable = Variable { name: to };
@@ -26,7 +32,13 @@ fn rename_variable(ctx: &mut Context, term: TermId, id: VariableId, from: Symbol
   }
 }
 
-fn rename_apply(ctx: &mut Context, term: TermId, id: ApplyId, from: SymbolId, to: SymbolId) -> TermId {
+fn rename_apply(
+  ctx: &mut Context,
+  term: TermId,
+  id: ApplyId,
+  from: SymbolId,
+  to: SymbolId,
+) -> TermId {
   let apply = *ctx.terms.applies.get(id);
   let function = rename(ctx, apply.function, from, to);
   let argument = rename(ctx, apply.argument, from, to);
@@ -38,7 +50,13 @@ fn rename_apply(ctx: &mut Context, term: TermId, id: ApplyId, from: SymbolId, to
   new_id
 }
 
-fn rename_lambda(ctx: &mut Context, term: TermId, id: LambdaId, from: SymbolId, to: SymbolId) -> TermId {
+fn rename_lambda(
+  ctx: &mut Context,
+  term: TermId,
+  id: LambdaId,
+  from: SymbolId,
+  to: SymbolId,
+) -> TermId {
   let lambda = *ctx.terms.lambdas.get(id);
   if lambda.parameter == from {
     let parameter = to;

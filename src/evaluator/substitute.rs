@@ -29,11 +29,7 @@ fn substitute_variable(
   replacement: TermId,
 ) -> TermId {
   let current = ctx.terms.variables.get(id);
-  if current.name == variable {
-    replacement
-  } else {
-    term
-  }
+  if current.name == variable { replacement } else { term }
 }
 
 fn substitute_apply(

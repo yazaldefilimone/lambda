@@ -58,8 +58,9 @@ impl<'a> Printer<'a> {
           self.format_collapsed_lambda(lam_id, out);
         } else {
           let lam = &self.ctx.terms.lambdas[lam_id];
+          let annotation = self.ctx.terms.annotation(lam_id);
           out.push('λ');
-          self.format_parameter(lam.parameter, lam.annotation, out);
+          self.format_parameter(lam.parameter, annotation, out);
           out.push_str(". ");
           self.format_term(lam.body, out);
         }
@@ -76,10 +77,11 @@ impl<'a> Printer<'a> {
 
     loop {
       let lam = &self.ctx.terms.lambdas[current_id];
+      let annotation = self.ctx.terms.annotation(current_id);
       if !first {
         out.push(' ');
       }
-      self.format_parameter(lam.parameter, lam.annotation, out);
+      self.format_parameter(lam.parameter, annotation, out);
       first = false;
 
       if let Some(next_id) = lam.body.as_lambda() {

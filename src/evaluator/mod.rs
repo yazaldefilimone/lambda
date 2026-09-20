@@ -43,9 +43,8 @@ impl<'a> Evaluator<'a> {
   }
 
   pub fn eval(&mut self, mut term: TermId) -> result::Result<TermId> {
-    let initial_terms = self.ctx.terms.variables.len()
-      + self.ctx.terms.lambdas.len()
-      + self.ctx.terms.applies.len();
+    let initial_terms =
+      self.ctx.terms.variables.len() + self.ctx.terms.lambdas.len() + self.ctx.terms.applies.len();
     let start = Instant::now();
     let mut steps = 0;
     loop {

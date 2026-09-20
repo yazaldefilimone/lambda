@@ -10,6 +10,7 @@ pub struct Term {
   pub variables: Arena<Variable>,
   pub lambdas: Arena<Lambda>,
   pub applies: Arena<Apply>,
+  pub annotations: Arena<Option<TypeId>>,
 }
 
 impl TermView for Term {
@@ -28,7 +29,12 @@ impl TermView for Term {
 
 impl Term {
   pub fn new() -> Self {
-    Self { variables: Arena::new(), lambdas: Arena::new(), applies: Arena::new() }
+    Self {
+      variables: Arena::new(),
+      lambdas: Arena::new(),
+      applies: Arena::new(),
+      annotations: Arena::new(),
+    }
   }
 
   pub fn add_variable(&mut self, variable: Variable) -> TermId {
@@ -37,13 +43,22 @@ impl Term {
   }
 
   pub fn add_lambda(&mut self, lambda: Lambda) -> TermId {
+    self.add_annotated(lambda, None)
+  }
+
+  pub fn add_annotated(&mut self, lambda: Lambda, annotation: Option<TypeId>) -> TermId {
     let is_closed = if lambda.body.is_closed() {
       true
     } else {
       !self.has_free_other_than(lambda.body, lambda.parameter)
     };
     let index = self.lambdas.add(lambda);
+    self.annotations.add(annotation);
     TermId::lambda(index, is_closed)
+  }
+
+  pub fn annotation(&self, id: LambdaId) -> Option<TypeId> {
+    *self.annotations.get(Id::new(id.index()))
   }
 
   pub fn add_apply(&mut self, apply: Apply) -> TermId {
@@ -197,7 +212,6 @@ pub struct Variable {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Lambda {
   pub parameter: SymbolId,
-  pub annotation: Option<TypeId>,
   pub body: TermId,
 }
 
