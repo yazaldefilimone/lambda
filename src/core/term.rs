@@ -37,13 +37,61 @@ impl Term {
   }
 
   pub fn add_lambda(&mut self, lambda: Lambda) -> TermId {
+    let is_closed = if lambda.body.is_closed() {
+      true
+    } else {
+      !self.has_free_other_than(lambda.body, lambda.parameter)
+    };
     let index = self.lambdas.add(lambda);
-    TermId::lambda(index)
+    TermId::lambda(index, is_closed)
   }
 
   pub fn add_apply(&mut self, apply: Apply) -> TermId {
+    let is_closed = apply.function.is_closed() && apply.argument.is_closed();
     let index = self.applies.add(apply);
-    TermId::apply(index)
+    TermId::apply(index, is_closed)
+  }
+
+  fn has_free_other_than(&self, term: TermId, bound: SymbolId) -> bool {
+    if term.is_closed() {
+      return false;
+    }
+    match term.kind() {
+      TermKind::Variable(id) => {
+        let var = self.variables.get(id);
+        var.name != bound
+      },
+      TermKind::Apply(id) => {
+        let apply = self.applies.get(id);
+        self.has_free_other_than(apply.function, bound)
+          || self.has_free_other_than(apply.argument, bound)
+      },
+      TermKind::Lambda(id) => {
+        let lambda = self.lambdas.get(id);
+        if lambda.parameter == bound {
+          self.has_any_free(lambda.body)
+        } else {
+          self.has_free_other_than(lambda.body, bound)
+        }
+      },
+    }
+  }
+
+  fn has_any_free(&self, term: TermId) -> bool {
+    if term.is_closed() {
+      return false;
+    }
+    match term.kind() {
+      TermKind::Variable(_) => true,
+      TermKind::Apply(id) => {
+        let apply = self.applies.get(id);
+        self.has_any_free(apply.function) || self.has_any_free(apply.argument)
+      },
+      TermKind::Lambda(id) => {
+        let lambda = self.lambdas.get(id);
+        self.has_free_other_than(lambda.body, lambda.parameter)
+      },
+    }
   }
 }
 
@@ -63,7 +111,8 @@ pub enum TermKind {
 
 impl TermId {
   pub const KIND_MASK: u32 = 0b11 << 30;
-  pub const INDEX_MASK: u32 = !Self::KIND_MASK;
+  pub const CLOSED_FLAG: u32 = 1 << 29;
+  pub const INDEX_MASK: u32 = !(Self::KIND_MASK | Self::CLOSED_FLAG);
 
   #[inline(always)]
   pub fn variable(id: VariableId) -> Self {
@@ -71,18 +120,30 @@ impl TermId {
   }
 
   #[inline(always)]
-  pub fn lambda(id: LambdaId) -> Self {
-    Self((1 << 30) | (id.index() & Self::INDEX_MASK))
+  pub fn lambda(id: LambdaId, is_closed: bool) -> Self {
+    let flag = if is_closed { Self::CLOSED_FLAG } else { 0 };
+    Self((1 << 30) | flag | (id.index() & Self::INDEX_MASK))
   }
 
   #[inline(always)]
-  pub fn apply(id: ApplyId) -> Self {
-    Self((2 << 30) | (id.index() & Self::INDEX_MASK))
+  pub fn apply(id: ApplyId, is_closed: bool) -> Self {
+    let flag = if is_closed { Self::CLOSED_FLAG } else { 0 };
+    Self((2 << 30) | flag | (id.index() & Self::INDEX_MASK))
+  }
+
+  #[inline(always)]
+  pub fn is_closed(self) -> bool {
+    (self.0 & Self::CLOSED_FLAG) != 0
+  }
+
+  #[inline(always)]
+  pub fn index(self) -> u32 {
+    self.0 & Self::INDEX_MASK
   }
 
   #[inline(always)]
   pub fn kind(self) -> TermKind {
-    let index = self.0 & Self::INDEX_MASK;
+    let index = self.index();
     match self.0 >> 30 {
       0 => TermKind::Variable(Id::new(index)),
       1 => TermKind::Lambda(Id::new(index)),
@@ -108,17 +169,17 @@ impl TermId {
 
   #[inline(always)]
   pub fn as_variable(self) -> Option<VariableId> {
-    if (self.0 >> 30) == 0 { Some(Id::new(self.0 & Self::INDEX_MASK)) } else { None }
+    if (self.0 >> 30) == 0 { Some(Id::new(self.index())) } else { None }
   }
 
   #[inline(always)]
   pub fn as_lambda(self) -> Option<LambdaId> {
-    if (self.0 >> 30) == 1 { Some(Id::new(self.0 & Self::INDEX_MASK)) } else { None }
+    if (self.0 >> 30) == 1 { Some(Id::new(self.index())) } else { None }
   }
 
   #[inline(always)]
   pub fn as_apply(self) -> Option<ApplyId> {
-    if (self.0 >> 30) == 2 { Some(Id::new(self.0 & Self::INDEX_MASK)) } else { None }
+    if (self.0 >> 30) == 2 { Some(Id::new(self.index())) } else { None }
   }
 }
 

@@ -5,31 +5,32 @@ use crate::{
 };
 
 pub fn rename(ctx: &mut Context, term: TermId, from: SymbolId, to: SymbolId) -> TermId {
+  if term.is_closed() {
+    return term;
+  }
   match term.kind() {
-    TermKind::Variable(id) => rename_variable(ctx, id, from, to),
-    TermKind::Apply(id) => rename_apply(ctx, id, from, to),
-    TermKind::Lambda(id) => rename_lambda(ctx, id, from, to),
+    TermKind::Variable(id) => rename_variable(ctx, term, id, from, to),
+    TermKind::Apply(id) => rename_apply(ctx, term, id, from, to),
+    TermKind::Lambda(id) => rename_lambda(ctx, term, id, from, to),
   }
 }
 
-fn rename_variable(ctx: &mut Context, id: VariableId, from: SymbolId, to: SymbolId) -> TermId {
+fn rename_variable(ctx: &mut Context, term: TermId, id: VariableId, from: SymbolId, to: SymbolId) -> TermId {
   let variable = ctx.terms.variables.get(id);
   if variable.name == from {
     let new_variable = Variable { name: to };
     let new_id = ctx.terms.add_variable(new_variable);
     new_id
   } else {
-    let term = TermId::variable(id);
     term
   }
 }
 
-fn rename_apply(ctx: &mut Context, id: ApplyId, from: SymbolId, to: SymbolId) -> TermId {
+fn rename_apply(ctx: &mut Context, term: TermId, id: ApplyId, from: SymbolId, to: SymbolId) -> TermId {
   let apply = *ctx.terms.applies.get(id);
   let function = rename(ctx, apply.function, from, to);
   let argument = rename(ctx, apply.argument, from, to);
   if function == apply.function && argument == apply.argument {
-    let term = TermId::apply(id);
     return term;
   }
   let new_apply = Apply { function, argument };
@@ -37,7 +38,7 @@ fn rename_apply(ctx: &mut Context, id: ApplyId, from: SymbolId, to: SymbolId) ->
   new_id
 }
 
-fn rename_lambda(ctx: &mut Context, id: LambdaId, from: SymbolId, to: SymbolId) -> TermId {
+fn rename_lambda(ctx: &mut Context, term: TermId, id: LambdaId, from: SymbolId, to: SymbolId) -> TermId {
   let lambda = *ctx.terms.lambdas.get(id);
   if lambda.parameter == from {
     let parameter = to;
@@ -48,7 +49,6 @@ fn rename_lambda(ctx: &mut Context, id: LambdaId, from: SymbolId, to: SymbolId) 
   }
   let body = rename(ctx, lambda.body, from, to);
   if body == lambda.body {
-    let term = TermId::lambda(id);
     return term;
   }
   let new_lambda = Lambda { body, ..lambda };

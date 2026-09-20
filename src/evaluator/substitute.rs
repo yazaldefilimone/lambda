@@ -11,15 +11,19 @@ pub fn substitute(
   variable: SymbolId,
   replacement: TermId,
 ) -> TermId {
+  if term.is_closed() {
+    return term;
+  }
   match term.kind() {
-    TermKind::Variable(id) => substitute_variable(ctx, id, variable, replacement),
-    TermKind::Lambda(id) => substitute_lambda(ctx, id, variable, replacement),
-    TermKind::Apply(id) => substitute_apply(ctx, id, variable, replacement),
+    TermKind::Variable(id) => substitute_variable(ctx, term, id, variable, replacement),
+    TermKind::Lambda(id) => substitute_lambda(ctx, term, id, variable, replacement),
+    TermKind::Apply(id) => substitute_apply(ctx, term, id, variable, replacement),
   }
 }
 
 fn substitute_variable(
   ctx: &mut Context,
+  term: TermId,
   id: VariableId,
   variable: SymbolId,
   replacement: TermId,
@@ -28,13 +32,13 @@ fn substitute_variable(
   if current.name == variable {
     replacement
   } else {
-    let term = TermId::variable(id);
     term
   }
 }
 
 fn substitute_apply(
   ctx: &mut Context,
+  term: TermId,
   id: ApplyId,
   variable: SymbolId,
   replacement: TermId,
@@ -43,7 +47,6 @@ fn substitute_apply(
   let function = substitute(ctx, apply.function, variable, replacement);
   let argument = substitute(ctx, apply.argument, variable, replacement);
   if function == apply.function && argument == apply.argument {
-    let term = TermId::apply(id);
     return term;
   }
   let new_apply = Apply { function, argument };
@@ -53,13 +56,13 @@ fn substitute_apply(
 
 fn substitute_lambda(
   ctx: &mut Context,
+  term: TermId,
   id: LambdaId,
   variable: SymbolId,
   replacement: TermId,
 ) -> TermId {
   let lambda = *ctx.terms.lambdas.get(id);
   if lambda.parameter == variable {
-    let term = TermId::lambda(id);
     return term;
   }
 
@@ -75,7 +78,6 @@ fn substitute_lambda(
 
   let body = substitute(ctx, lambda.body, variable, replacement);
   if body == lambda.body {
-    let term = TermId::lambda(id);
     return term;
   }
 
@@ -85,6 +87,9 @@ fn substitute_lambda(
 }
 
 pub fn has_free_variable(ctx: &Context, term: TermId, variable: SymbolId) -> bool {
+  if term.is_closed() {
+    return false;
+  }
   match term.kind() {
     TermKind::Variable(id) => {
       let variable_entry = ctx.terms.variables.get(id);
