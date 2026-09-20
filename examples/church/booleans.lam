@@ -1,0 +1,8 @@
+(λtrue false and or not.
+  not (and true false)
+)
+(λt f. t)
+(λt f. f)
+(λp q. p q p)
+(λp q. p p q)
+(λb. b (λt f. f) (λt f. t))

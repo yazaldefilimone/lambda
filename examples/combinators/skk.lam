@@ -1,0 +1,6 @@
+(λS K true.
+  S K K true
+)
+(λx y z. x z (y z))
+(λx y. x)
+(λt f. t)

@@ -1,0 +1,5 @@
+(λsucc two.
+  succ two
+)
+(λn f x. f (n f x))
+(λf x. f (f x))

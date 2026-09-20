@@ -1,0 +1,5 @@
+(λmult two.
+  mult two (mult two (mult two two))
+)
+(λm n f. m (n f))
+(λf x. f (f x))

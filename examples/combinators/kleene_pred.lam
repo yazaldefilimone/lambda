@@ -1,0 +1,5 @@
+(λpred four.
+  pred four
+)
+(λn f x. n (λg h. h (g f)) (λu. x) (λu. u))
+(λf x. f (f (f (f x))))

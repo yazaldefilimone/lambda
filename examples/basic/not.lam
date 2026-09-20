@@ -1,0 +1,5 @@
+(λnot false.
+  not false
+)
+(λb t f. b f t)
+(λt f. f)
