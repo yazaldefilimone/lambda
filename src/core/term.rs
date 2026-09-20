@@ -12,6 +12,9 @@ pub struct Term {
   pub applies: Arena<Apply>,
   pub annotations: Arena<Option<TypeId>>,
   pub free_variables: Vec<SymbolId>,
+  variable_cache: Vec<Option<TermId>>,
+  lambda_cache: rustc_hash::FxHashMap<TermId, TermId>,
+  apply_cache: rustc_hash::FxHashMap<(TermId, TermId), TermId>,
 }
 
 impl TermView for Term {
@@ -36,6 +39,9 @@ impl Term {
       applies: Arena::new(),
       annotations: Arena::new(),
       free_variables: Vec::new(),
+      variable_cache: Vec::with_capacity(32),
+      lambda_cache: rustc_hash::FxHashMap::default(),
+      apply_cache: rustc_hash::FxHashMap::default(),
     }
   }
 
@@ -45,8 +51,18 @@ impl Term {
   }
 
   pub fn add_variable(&mut self, variable: Variable) -> TermId {
+    let idx = variable.index as usize;
+    if idx < self.variable_cache.len() {
+      if let Some(id) = self.variable_cache[idx] {
+        return id;
+      }
+    } else {
+      self.variable_cache.resize(idx + 1, None);
+    }
     let index = self.variables.add(variable);
-    TermId::variable(index)
+    let id = TermId::variable(index);
+    self.variable_cache[idx] = Some(id);
+    id
   }
 
   pub fn add_lambda(&mut self, lambda: Lambda) -> TermId {
@@ -54,9 +70,18 @@ impl Term {
   }
 
   pub fn add_annotated(&mut self, lambda: Lambda, annotation: Option<TypeId>) -> TermId {
+    if annotation.is_none()
+      && let Some(&id) = self.lambda_cache.get(&lambda.body)
+    {
+      return id;
+    }
     let index = self.lambdas.add(lambda);
     self.annotations.add(annotation);
-    TermId::lambda(index)
+    let id = TermId::lambda(index);
+    if annotation.is_none() {
+      self.lambda_cache.insert(lambda.body, id);
+    }
+    id
   }
 
   pub fn annotation(&self, id: LambdaId) -> Option<TypeId> {
@@ -64,8 +89,14 @@ impl Term {
   }
 
   pub fn add_apply(&mut self, apply: Apply) -> TermId {
+    let key = (apply.function, apply.argument);
+    if let Some(&id) = self.apply_cache.get(&key) {
+      return id;
+    }
     let index = self.applies.add(apply);
-    TermId::apply(index)
+    let id = TermId::apply(index);
+    self.apply_cache.insert(key, id);
+    id
   }
 }
 
