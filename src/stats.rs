@@ -56,6 +56,7 @@ impl Stats {
     println!("eval");
     println!("  steps: {}", self.eval.steps);
     println!("  reductions: {}", self.eval.reductions);
+    println!("  created: {}", self.eval.created_terms);
     println!("  time: {formatted_time}");
   }
 }

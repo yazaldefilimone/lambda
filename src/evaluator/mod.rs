@@ -20,6 +20,7 @@ use strategy::Strategy;
 pub struct EvalStats {
   pub steps: usize,
   pub reductions: usize,
+  pub created_terms: usize,
   pub duration: Duration,
 }
 
@@ -42,10 +43,17 @@ impl<'a> Evaluator<'a> {
   }
 
   pub fn eval(&mut self, mut term: TermId) -> result::Result<TermId> {
+    let initial_terms = self.ctx.terms.variables.len()
+      + self.ctx.terms.lambdas.len()
+      + self.ctx.terms.applies.len();
     let start = Instant::now();
     let mut steps = 0;
     loop {
       if steps >= self.strategy.options.limit {
+        let final_terms = self.ctx.terms.variables.len()
+          + self.ctx.terms.lambdas.len()
+          + self.ctx.terms.applies.len();
+        self.stats.created_terms = final_terms.saturating_sub(initial_terms);
         let reductions = self.stats.reductions;
         let text = format!("eval limit reached\n\nsteps: {steps}\nreductions: {reductions}");
         let message = error!("{text}");
@@ -57,6 +65,10 @@ impl<'a> Evaluator<'a> {
       let next_opt = self.strategy.reduce(term, self.ctx)?;
       let Some(next) = next_opt else {
         self.stats.duration = start.elapsed();
+        let final_terms = self.ctx.terms.variables.len()
+          + self.ctx.terms.lambdas.len()
+          + self.ctx.terms.applies.len();
+        self.stats.created_terms = final_terms.saturating_sub(initial_terms);
         return Ok(term);
       };
 
