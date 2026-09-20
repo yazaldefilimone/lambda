@@ -37,6 +37,11 @@ impl Term {
     }
   }
 
+  #[inline(always)]
+  pub fn total_terms(&self) -> usize {
+    self.variables.len() + self.lambdas.len() + self.applies.len()
+  }
+
   pub fn add_variable(&mut self, variable: Variable) -> TermId {
     let index = self.variables.add(variable);
     TermId::variable(index)
