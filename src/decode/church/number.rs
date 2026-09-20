@@ -9,7 +9,7 @@ use crate::{
 };
 
 pub fn decode(ctx: &Context, values: &mut Values, term: TermId) -> result::Result<Option<ValueId>> {
-  let (function_parameter, body) = match get_lambda(ctx, term) {
+  let body = match get_lambda(ctx, term) {
     Some(value) => value,
     None => {
       let result = None;
@@ -17,7 +17,7 @@ pub fn decode(ctx: &Context, values: &mut Values, term: TermId) -> result::Resul
     },
   };
 
-  let (argument_parameter, body) = match get_lambda(ctx, body) {
+  let body = match get_lambda(ctx, body) {
     Some(value) => value,
     None => {
       let result = None;
@@ -25,7 +25,7 @@ pub fn decode(ctx: &Context, values: &mut Values, term: TermId) -> result::Resul
     },
   };
 
-  let count = match count_application(ctx, body, function_parameter, argument_parameter) {
+  let count = match count_application(ctx, body) {
     Some(value) => value,
     None => {
       let result = None;

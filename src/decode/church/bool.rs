@@ -7,7 +7,7 @@ use crate::{
 };
 
 pub fn decode(ctx: &Context, values: &mut Values, term: TermId) -> result::Result<Option<ValueId>> {
-  let (true_parameter, body) = match get_lambda(ctx, term) {
+  let body = match get_lambda(ctx, term) {
     Some(value) => value,
     None => {
       let result = None;
@@ -15,7 +15,7 @@ pub fn decode(ctx: &Context, values: &mut Values, term: TermId) -> result::Resul
     },
   };
 
-  let (false_parameter, body) = match get_lambda(ctx, body) {
+  let body = match get_lambda(ctx, body) {
     Some(value) => value,
     None => {
       let result = None;
@@ -23,13 +23,13 @@ pub fn decode(ctx: &Context, values: &mut Values, term: TermId) -> result::Resul
     },
   };
 
-  if is_variable(ctx, body, true_parameter) {
+  if is_variable(ctx, body, 1) {
     let value = values.add_bool(true);
     let result = Some(value);
     return Ok(result);
   }
 
-  if is_variable(ctx, body, false_parameter) {
+  if is_variable(ctx, body, 0) {
     let value = values.add_bool(false);
     let result = Some(value);
     return Ok(result);

@@ -1,23 +1,64 @@
 use crate::{
   context::Context,
-  core::{Apply, ApplyId, Lambda, LambdaId, TermId, TermKind, VariableId},
-  evaluator::alpha,
-  symbol::SymbolId,
+  core::{Apply, ApplyId, Lambda, LambdaId, TermId, TermKind, Variable, VariableId},
 };
 
-pub fn substitute(
-  ctx: &mut Context,
-  term: TermId,
-  variable: SymbolId,
-  replacement: TermId,
-) -> TermId {
-  if term.is_closed() {
+pub fn shift(ctx: &mut Context, delta: i32, cutoff: u32, term: TermId) -> TermId {
+  if delta == 0 {
     return term;
   }
   match term.kind() {
-    TermKind::Variable(id) => substitute_variable(ctx, term, id, variable, replacement),
-    TermKind::Lambda(id) => substitute_lambda(ctx, term, id, variable, replacement),
-    TermKind::Apply(id) => substitute_apply(ctx, term, id, variable, replacement),
+    TermKind::Variable(id) => shift_variable(ctx, term, id, delta, cutoff),
+    TermKind::Lambda(id) => shift_lambda(ctx, term, id, delta, cutoff),
+    TermKind::Apply(id) => shift_apply(ctx, term, id, delta, cutoff),
+  }
+}
+
+fn shift_variable(
+  ctx: &mut Context,
+  term: TermId,
+  id: VariableId,
+  delta: i32,
+  cutoff: u32,
+) -> TermId {
+  let var = *ctx.terms.variables.get(id);
+  if var.index < cutoff {
+    term
+  } else {
+    let new_index = (var.index as i32 + delta) as u32;
+    let new_var = Variable { index: new_index };
+    ctx.terms.add_variable(new_var)
+  }
+}
+
+fn shift_lambda(ctx: &mut Context, term: TermId, id: LambdaId, delta: i32, cutoff: u32) -> TermId {
+  let lambda = *ctx.terms.lambdas.get(id);
+  let new_body = shift(ctx, delta, cutoff + 1, lambda.body);
+  if new_body == lambda.body {
+    term
+  } else {
+    let new_lambda = Lambda { body: new_body };
+    ctx.terms.add_lambda(new_lambda)
+  }
+}
+
+fn shift_apply(ctx: &mut Context, term: TermId, id: ApplyId, delta: i32, cutoff: u32) -> TermId {
+  let apply = *ctx.terms.applies.get(id);
+  let function = shift(ctx, delta, cutoff, apply.function);
+  let argument = shift(ctx, delta, cutoff, apply.argument);
+  if function == apply.function && argument == apply.argument {
+    term
+  } else {
+    let new_apply = Apply { function, argument };
+    ctx.terms.add_apply(new_apply)
+  }
+}
+
+pub fn substitute(ctx: &mut Context, cutoff: u32, value: TermId, term: TermId) -> TermId {
+  match term.kind() {
+    TermKind::Variable(id) => substitute_variable(ctx, term, id, cutoff, value),
+    TermKind::Lambda(id) => substitute_lambda(ctx, term, id, cutoff, value),
+    TermKind::Apply(id) => substitute_apply(ctx, term, id, cutoff, value),
   }
 }
 
@@ -25,102 +66,51 @@ fn substitute_variable(
   ctx: &mut Context,
   term: TermId,
   id: VariableId,
-  variable: SymbolId,
-  replacement: TermId,
+  cutoff: u32,
+  value: TermId,
 ) -> TermId {
-  let current = ctx.terms.variables.get(id);
-  if current.name == variable { replacement } else { term }
-}
-
-fn substitute_apply(
-  ctx: &mut Context,
-  term: TermId,
-  id: ApplyId,
-  variable: SymbolId,
-  replacement: TermId,
-) -> TermId {
-  let apply = *ctx.terms.applies.get(id);
-  let function = substitute(ctx, apply.function, variable, replacement);
-  let argument = substitute(ctx, apply.argument, variable, replacement);
-  if function == apply.function && argument == apply.argument {
-    return term;
+  let var = *ctx.terms.variables.get(id);
+  if var.index == cutoff {
+    shift(ctx, cutoff as i32, 0, value)
+  } else if var.index > cutoff {
+    let new_var = Variable { index: var.index - 1 };
+    ctx.terms.add_variable(new_var)
+  } else {
+    term
   }
-  let new_apply = Apply { function, argument };
-  let new_id = ctx.terms.add_apply(new_apply);
-  new_id
 }
 
 fn substitute_lambda(
   ctx: &mut Context,
   term: TermId,
   id: LambdaId,
-  variable: SymbolId,
-  replacement: TermId,
+  cutoff: u32,
+  value: TermId,
 ) -> TermId {
   let lambda = *ctx.terms.lambdas.get(id);
-  if lambda.parameter == variable {
-    return term;
-  }
-
-  let captured = has_free_variable(ctx, replacement, lambda.parameter);
-  if captured {
-    let fresh = fresh_symbol(ctx, lambda.parameter, lambda.body, replacement);
-    let renamed_body = alpha::rename(ctx, lambda.body, lambda.parameter, fresh);
-    let body = substitute(ctx, renamed_body, variable, replacement);
-    let new_lambda = Lambda { parameter: fresh, body, ..lambda };
-    let new_id = ctx.terms.add_lambda(new_lambda);
-    return new_id;
-  }
-
-  let body = substitute(ctx, lambda.body, variable, replacement);
-  if body == lambda.body {
-    return term;
-  }
-
-  let new_lambda = Lambda { body, ..lambda };
-  let new_id = ctx.terms.add_lambda(new_lambda);
-  new_id
-}
-
-pub fn has_free_variable(ctx: &Context, term: TermId, variable: SymbolId) -> bool {
-  if term.is_closed() {
-    return false;
-  }
-  match term.kind() {
-    TermKind::Variable(id) => {
-      let variable_entry = ctx.terms.variables.get(id);
-      variable_entry.name == variable
-    },
-    TermKind::Apply(id) => {
-      let apply = ctx.terms.applies.get(id);
-      let in_function = has_free_variable(ctx, apply.function, variable);
-      if in_function {
-        return true;
-      }
-      let in_argument = has_free_variable(ctx, apply.argument, variable);
-      in_argument
-    },
-    TermKind::Lambda(id) => {
-      let lambda = ctx.terms.lambdas.get(id);
-      if lambda.parameter == variable {
-        return false;
-      }
-      let in_body = has_free_variable(ctx, lambda.body, variable);
-      in_body
-    },
+  let new_body = substitute(ctx, cutoff + 1, value, lambda.body);
+  if new_body == lambda.body {
+    term
+  } else {
+    let new_lambda = Lambda { body: new_body };
+    ctx.terms.add_lambda(new_lambda)
   }
 }
 
-fn fresh_symbol(ctx: &mut Context, base: SymbolId, term1: TermId, term2: TermId) -> SymbolId {
-  let base_name = ctx.symbols.resolve(base).to_string();
-  let mut candidate = format!("{base_name}'");
-  loop {
-    let symbol = ctx.symbols.intern(&candidate);
-    let free_in_first = has_free_variable(ctx, term1, symbol);
-    let free_in_second = has_free_variable(ctx, term2, symbol);
-    if !free_in_first && !free_in_second {
-      return symbol;
-    }
-    candidate.push('\'');
+fn substitute_apply(
+  ctx: &mut Context,
+  term: TermId,
+  id: ApplyId,
+  cutoff: u32,
+  value: TermId,
+) -> TermId {
+  let apply = *ctx.terms.applies.get(id);
+  let function = substitute(ctx, cutoff, value, apply.function);
+  let argument = substitute(ctx, cutoff, value, apply.argument);
+  if function == apply.function && argument == apply.argument {
+    term
+  } else {
+    let new_apply = Apply { function, argument };
+    ctx.terms.add_apply(new_apply)
   }
 }

@@ -1,4 +1,3 @@
-pub mod alpha;
 pub mod beta;
 pub mod strategy;
 pub mod substitute;
@@ -155,7 +154,7 @@ impl<'a> Evaluator<'a> {
     if normalized_body == lambda.body {
       return Ok(term);
     }
-    let new_lambda = Lambda { parameter: lambda.parameter, body: normalized_body };
+    let new_lambda = Lambda { body: normalized_body };
     let new_id = self.ctx.terms.add_lambda(new_lambda);
     Ok(new_id)
   }

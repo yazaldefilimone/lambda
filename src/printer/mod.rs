@@ -32,7 +32,8 @@ impl<'a> Printer<'a> {
 
   pub fn print_term(&self, term_id: TermId) -> String {
     let mut out = String::new();
-    self.format_term(term_id, &mut out);
+    let mut names = Vec::new();
+    self.format_term(term_id, &mut names, &mut out);
     out
   }
 
@@ -47,79 +48,127 @@ impl<'a> Printer<'a> {
     self.ctx.symbols.resolve(symbol)
   }
 
-  fn format_term(&self, term_id: TermId, out: &mut String) {
+  fn pick_name(&self, names: &[String]) -> String {
+    const CANDIDATES: &[&str] = &[
+      "x", "y", "z", "w", "v", "u", "t", "s", "r", "q", "p", "a", "b", "c", "d", "e", "f", "g",
+      "h", "i", "j", "k", "l", "m", "n", "o",
+    ];
+    for &candidate in CANDIDATES {
+      let already_used = names.iter().any(|n| n == candidate);
+      let is_free = self
+        .ctx
+        .terms
+        .free_variables
+        .iter()
+        .any(|&sym| self.resolve_symbol(sym) == candidate);
+      if !already_used && !is_free {
+        return candidate.to_string();
+      }
+    }
+    format!("x{}", names.len())
+  }
+
+  fn format_term(&self, term_id: TermId, names: &mut Vec<String>, out: &mut String) {
     match term_id.kind() {
       crate::core::TermKind::Variable(var_id) => {
         let var = &self.ctx.terms.variables[var_id];
-        out.push_str(self.resolve_symbol(var.name));
+        let index = var.index as usize;
+        if index < names.len() {
+          let name = &names[names.len() - 1 - index];
+          out.push_str(name);
+        } else {
+          let free_idx = index - names.len();
+          if let Some(&sym) = self.ctx.terms.free_variables.get(free_idx) {
+            out.push_str(self.resolve_symbol(sym));
+          } else {
+            out.push_str(&format!("_{index}"));
+          }
+        }
       },
       crate::core::TermKind::Lambda(lam_id) => {
         if self.options.collapse {
-          self.format_collapsed_lambda(lam_id, out);
+          self.format_collapsed_lambda(lam_id, names, out);
         } else {
           let lam = &self.ctx.terms.lambdas[lam_id];
           let annotation = self.ctx.terms.annotation(lam_id);
+          let name = self.pick_name(names);
           out.push('λ');
-          self.format_parameter(lam.parameter, annotation, out);
+          names.push(name.clone());
+          self.format_parameter(&name, annotation, out);
           out.push_str(". ");
-          self.format_term(lam.body, out);
+          self.format_term(lam.body, names, out);
+          names.pop();
         }
       },
       crate::core::TermKind::Apply(apply_id) => {
-        self.format_apply(apply_id, out);
+        self.format_apply(apply_id, names, out);
       },
     }
   }
 
-  fn format_collapsed_lambda(&self, mut current_id: LambdaId, out: &mut String) {
+  fn format_collapsed_lambda(
+    &self,
+    mut current_id: LambdaId,
+    names: &mut Vec<String>,
+    out: &mut String,
+  ) {
     out.push('λ');
     let mut first = true;
+    let mut pushed_count = 0;
 
     loop {
       let lam = &self.ctx.terms.lambdas[current_id];
       let annotation = self.ctx.terms.annotation(current_id);
+      let name = self.pick_name(names);
+      names.push(name.clone());
+      pushed_count += 1;
+
       if !first {
         out.push(' ');
       }
-      self.format_parameter(lam.parameter, annotation, out);
+      self.format_parameter(&name, annotation, out);
       first = false;
 
       if let Some(next_id) = lam.body.as_lambda() {
         current_id = next_id;
       } else {
         out.push_str(". ");
-        self.format_term(lam.body, out);
+        self.format_term(lam.body, names, out);
         break;
       }
     }
+
+    for _ in 0..pushed_count {
+      names.pop();
+    }
   }
 
-  fn format_parameter(&self, name: SymbolId, annotation: Option<TypeId>, out: &mut String) {
-    out.push_str(self.resolve_symbol(name));
+  fn format_parameter(&self, name: &str, annotation: Option<TypeId>, out: &mut String) {
+    out.push_str(name);
     if let Some(type_id) = annotation {
       out.push_str(": ");
       self.format_type(type_id, out);
     }
   }
 
-  fn format_apply(&self, apply_id: ApplyId, out: &mut String) {
+  fn format_apply(&self, apply_id: ApplyId, names: &mut Vec<String>, out: &mut String) {
     let apply = &self.ctx.terms.applies[apply_id];
 
     if apply.function.is_lambda() {
       out.push('(');
-      self.format_term(apply.function, out);
+      self.format_term(apply.function, names, out);
       out.push(')');
     } else {
-      self.format_term(apply.function, out);
+      self.format_term(apply.function, names, out);
     }
 
     out.push(' ');
 
     if apply.argument.is_variable() {
-      self.format_term(apply.argument, out);
+      self.format_term(apply.argument, names, out);
     } else {
       out.push('(');
-      self.format_term(apply.argument, out);
+      self.format_term(apply.argument, names, out);
       out.push(')');
     }
   }

@@ -6,11 +6,10 @@ use crate::{
     value::{ListValue, ValueId, Values},
   },
   result,
-  symbol::SymbolId,
 };
 
 pub fn decode(ctx: &Context, values: &mut Values, term: TermId) -> result::Result<Option<ValueId>> {
-  let (constructor, body) = match get_lambda(ctx, term) {
+  let body = match get_lambda(ctx, term) {
     Some(value) => value,
     None => {
       let result = None;
@@ -18,7 +17,7 @@ pub fn decode(ctx: &Context, values: &mut Values, term: TermId) -> result::Resul
     },
   };
 
-  let (nil, body) = match get_lambda(ctx, body) {
+  let body = match get_lambda(ctx, body) {
     Some(value) => value,
     None => {
       let result = None;
@@ -27,7 +26,7 @@ pub fn decode(ctx: &Context, values: &mut Values, term: TermId) -> result::Resul
   };
 
   let mut items = Vec::new();
-  let decoded = decode_items(ctx, values, body, constructor, nil, &mut items)?;
+  let decoded = decode_items(ctx, values, body, &mut items)?;
   if !decoded {
     let result = None;
     return Ok(result);
@@ -44,11 +43,9 @@ fn decode_items(
   ctx: &Context,
   values: &mut Values,
   term: TermId,
-  constructor: SymbolId,
-  nil: SymbolId,
   items: &mut Vec<ValueId>,
 ) -> result::Result<bool> {
-  if is_variable(ctx, term, nil) {
+  if is_variable(ctx, term, 0) {
     return Ok(true);
   }
 
@@ -62,7 +59,7 @@ fn decode_items(
     None => return Ok(false),
   };
 
-  if !is_variable(ctx, function, constructor) {
+  if !is_variable(ctx, function, 1) {
     return Ok(false);
   }
 
@@ -72,5 +69,5 @@ fn decode_items(
   };
 
   items.push(value);
-  decode_items(ctx, values, tail, constructor, nil, items)
+  decode_items(ctx, values, tail, items)
 }

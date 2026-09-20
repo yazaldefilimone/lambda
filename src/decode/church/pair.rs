@@ -9,7 +9,7 @@ use crate::{
 };
 
 pub fn decode(ctx: &Context, values: &mut Values, term: TermId) -> result::Result<Option<ValueId>> {
-  let (projection_parameter, body) = match get_lambda(ctx, term) {
+  let body = match get_lambda(ctx, term) {
     Some(value) => value,
     None => {
       let result = None;
@@ -33,7 +33,7 @@ pub fn decode(ctx: &Context, values: &mut Values, term: TermId) -> result::Resul
     },
   };
 
-  if !is_variable(ctx, projection_term, projection_parameter) {
+  if !is_variable(ctx, projection_term, 0) {
     let result = None;
     return Ok(result);
   }

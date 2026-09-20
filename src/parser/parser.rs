@@ -15,6 +15,7 @@ pub struct Parser<'a> {
   pub messages: &'a mut Messages,
   pub terms: &'a mut Term,
   pub types: &'a mut Type,
+  pub scope: Vec<SymbolId>,
 }
 
 impl<'a> Parser<'a> {
@@ -24,7 +25,7 @@ impl<'a> Parser<'a> {
     terms: &'a mut Term,
     types: &'a mut Type,
   ) -> Self {
-    Self { reader: Reader::new(tokens), messages, terms, types }
+    Self { reader: Reader::new(tokens), messages, terms, types, scope: Vec::new() }
   }
 
   pub fn parse_module(&mut self) -> result::Result<TermId> {
@@ -52,11 +53,20 @@ impl<'a> Parser<'a> {
     }
 
     self.reader.expect(TokenKind::Dot, self.messages)?;
+
+    for &(param_name, _) in &parameters {
+      self.scope.push(param_name);
+    }
+
     let body = self.parse_term()?;
 
+    for _ in 0..parameters.len() {
+      self.scope.pop();
+    }
+
     let mut current = body;
-    for (parameter, annotation) in parameters.into_iter().rev() {
-      let lambda = Lambda { parameter, body: current };
+    for (_, annotation) in parameters.into_iter().rev() {
+      let lambda = Lambda { body: current };
       current = self.terms.add_annotated(lambda, annotation);
     }
 
@@ -79,7 +89,16 @@ impl<'a> Parser<'a> {
     match self.reader.current() {
       TokenKind::Identifier(symbol) => {
         self.reader.advance();
-        let variable = Variable { name: symbol };
+        let index = if let Some(pos) = self.scope.iter().rev().position(|&s| s == symbol) {
+          pos as u32
+        } else if let Some(pos) = self.terms.free_variables.iter().position(|&s| s == symbol) {
+          (self.scope.len() + pos) as u32
+        } else {
+          let pos = self.terms.free_variables.len();
+          self.terms.free_variables.push(symbol);
+          (self.scope.len() + pos) as u32
+        };
+        let variable = Variable { index };
         Ok(self.terms.add_variable(variable))
       },
       TokenKind::LeftParen => {
