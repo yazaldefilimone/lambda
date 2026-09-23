@@ -3,7 +3,7 @@ pub mod options;
 use clap::Parser;
 use std::path::PathBuf;
 
-use self::options::{ColorChoice, Emit, Encoding, Options};
+use self::options::{ColorChoice, DecodePreference, Emit, Encoding, Options};
 
 #[derive(Debug, Parser)]
 #[command(
@@ -47,12 +47,19 @@ pub struct Cli {
     value_name = "ENCODING",
     num_args = 0..=1,
     default_missing_value = "church",
-    require_equals = true,
     hide_possible_values = true,
     value_enum,
     help = "Decode lambda encoding (church, scott, boehm)"
   )]
   pub decode: Option<Encoding>,
+
+  #[arg(
+    long,
+    value_name = "TYPE",
+    value_enum,
+    help = "Preferred type when decoding ambiguous values (number, boolean, list, pair)"
+  )]
+  pub prefer: Option<DecodePreference>,
 
   #[arg(long, help = "Show evaluation steps")]
   pub trace: bool,
@@ -96,12 +103,17 @@ impl Cli {
 
     let color = if self.no_color { ColorChoice::Never } else { self.color };
 
+    let decode = self
+      .decode
+      .or_else(|| if self.prefer.is_some() { Some(Encoding::Church) } else { None });
+
     Options {
       input,
       output: self.output,
       check: self.check,
       emit: self.emit,
-      decode: self.decode,
+      decode,
+      prefer: self.prefer,
       trace: self.trace,
       stats: self.stats,
       limit: self.limit,
