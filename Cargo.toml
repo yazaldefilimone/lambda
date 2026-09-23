@@ -27,3 +27,11 @@ walkdir = "2.5.0"
 [[bench]]
 name = "evaluator"
 harness = false
+
+[[bench]]
+name = "lexer"
+harness = false
+
+[[bench]]
+name = "parser"
+harness = false
