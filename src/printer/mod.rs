@@ -1,8 +1,15 @@
+use std::fmt::Write;
+
 use crate::{
   context::Context,
   core::{ApplyId, LambdaId, TermId, TypeId},
   symbol::SymbolId,
 };
+
+const CANDIDATES: &[&str] = &[
+  "x", "y", "z", "w", "v", "u", "t", "s", "r", "q", "p", "a", "b", "c", "d", "e", "f", "g", "h",
+  "i", "j", "k", "l", "m", "n", "o",
+];
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Options {
@@ -18,21 +25,42 @@ impl Default for Options {
 pub struct Printer<'a> {
   ctx: &'a Context,
   options: Options,
+  free_vars_mask: u32,
 }
 
 impl<'a> Printer<'a> {
   pub fn new(ctx: &'a Context) -> Self {
-    Self { ctx, options: Options::default() }
+    let mut free_vars_mask = 0u32;
+    for (i, &cand) in CANDIDATES.iter().enumerate() {
+      let mut iterator = ctx.terms.free_variables.iter();
+      if iterator.any(|&sym| ctx.symbols.resolve(sym) == cand) {
+        free_vars_mask |= 1 << i;
+      }
+    }
+    Self { ctx, options: Options::default(), free_vars_mask }
   }
 
   #[allow(dead_code)]
   pub fn with_options(ctx: &'a Context, options: Options) -> Self {
-    Self { ctx, options }
+    let mut printer = Self::new(ctx);
+    printer.options = options;
+    printer
   }
 
   pub fn print_term(&self, term_id: TermId) -> String {
-    let mut out = String::new();
-    let mut names = Vec::new();
+    let mut out = String::with_capacity(64);
+    let mut names = Vec::with_capacity(16);
+    self.format_term(term_id, &mut names, &mut out);
+    out
+  }
+
+  pub fn print_term_in_scope(&self, term_id: TermId, scope: &[LambdaId]) -> String {
+    let mut out = String::with_capacity(64);
+    let mut names = Vec::with_capacity(scope.len() + 16);
+    for &lam_id in scope {
+      let name = self.pick_name(&names, Some(lam_id));
+      names.push(name);
+    }
     self.format_term(term_id, &mut names, &mut out);
     out
   }
@@ -44,44 +72,42 @@ impl<'a> Printer<'a> {
     out
   }
 
-  fn resolve_symbol(&self, symbol: SymbolId) -> &str {
+  fn resolve_symbol(&self, symbol: SymbolId) -> &'a str {
     self.ctx.symbols.resolve(symbol)
   }
 
-  fn pick_name(&self, names: &[String]) -> String {
-    const CANDIDATES: &[&str] = &[
-      "x", "y", "z", "w", "v", "u", "t", "s", "r", "q", "p", "a", "b", "c", "d", "e", "f", "g",
-      "h", "i", "j", "k", "l", "m", "n", "o",
-    ];
-    for &candidate in CANDIDATES {
-      let already_used = names.iter().any(|n| n == candidate);
-      let is_free = self
-        .ctx
-        .terms
-        .free_variables
-        .iter()
-        .any(|&sym| self.resolve_symbol(sym) == candidate);
-      if !already_used && !is_free {
-        return candidate.to_string();
+  fn pick_name(&self, names: &[&str], lam_id: Option<LambdaId>) -> &'a str {
+    if let Some(id) = lam_id
+      && let Some(sym) = self.ctx.terms.parameter(id)
+    {
+      let orig = self.resolve_symbol(sym);
+      if !names.contains(&orig) {
+        return orig;
       }
     }
-    format!("x{}", names.len())
+
+    for (i, &candidate) in CANDIDATES.iter().enumerate() {
+      if (self.free_vars_mask & (1 << i)) == 0 && !names.contains(&candidate) {
+        return candidate;
+      }
+    }
+    CANDIDATES[names.len() % CANDIDATES.len()]
   }
 
-  fn format_term(&self, term_id: TermId, names: &mut Vec<String>, out: &mut String) {
+  fn format_term(&self, term_id: TermId, names: &mut Vec<&'a str>, out: &mut String) {
     match term_id.kind() {
       crate::core::TermKind::Variable(var_id) => {
         let var = &self.ctx.terms.variables[var_id];
         let index = var.index as usize;
         if index < names.len() {
-          let name = &names[names.len() - 1 - index];
+          let name = names[names.len() - 1 - index];
           out.push_str(name);
         } else {
           let free_idx = index - names.len();
           if let Some(&sym) = self.ctx.terms.free_variables.get(free_idx) {
             out.push_str(self.resolve_symbol(sym));
           } else {
-            out.push_str(&format!("_{index}"));
+            let _ = write!(out, "_{index}");
           }
         }
       },
@@ -91,10 +117,10 @@ impl<'a> Printer<'a> {
         } else {
           let lam = &self.ctx.terms.lambdas[lam_id];
           let annotation = self.ctx.terms.annotation(lam_id);
-          let name = self.pick_name(names);
+          let name = self.pick_name(names, Some(lam_id));
           out.push('λ');
-          names.push(name.clone());
-          self.format_parameter(&name, annotation, out);
+          names.push(name);
+          self.format_parameter(name, annotation, out);
           out.push_str(". ");
           self.format_term(lam.body, names, out);
           names.pop();
@@ -109,7 +135,7 @@ impl<'a> Printer<'a> {
   fn format_collapsed_lambda(
     &self,
     mut current_id: LambdaId,
-    names: &mut Vec<String>,
+    names: &mut Vec<&'a str>,
     out: &mut String,
   ) {
     out.push('λ');
@@ -119,14 +145,14 @@ impl<'a> Printer<'a> {
     loop {
       let lam = &self.ctx.terms.lambdas[current_id];
       let annotation = self.ctx.terms.annotation(current_id);
-      let name = self.pick_name(names);
-      names.push(name.clone());
+      let name = self.pick_name(names, Some(current_id));
+      names.push(name);
       pushed_count += 1;
 
       if !first {
         out.push(' ');
       }
-      self.format_parameter(&name, annotation, out);
+      self.format_parameter(name, annotation, out);
       first = false;
 
       if let Some(next_id) = lam.body.as_lambda() {
@@ -151,7 +177,7 @@ impl<'a> Printer<'a> {
     }
   }
 
-  fn format_apply(&self, apply_id: ApplyId, names: &mut Vec<String>, out: &mut String) {
+  fn format_apply(&self, apply_id: ApplyId, names: &mut Vec<&'a str>, out: &mut String) {
     let apply = &self.ctx.terms.applies[apply_id];
 
     if apply.function.is_lambda() {
