@@ -1,0 +1,16 @@
+---
+source: tests/golden.rs
+expression: snapshot_content
+input_file: tests/golden/03_church/subtraction_positive.lam
+---
+3
+
+term
+  nodes: 102
+  depth: 21
+
+eval
+  steps:    136
+  reduces:  136
+  allocs:   359
+  time:     [time]

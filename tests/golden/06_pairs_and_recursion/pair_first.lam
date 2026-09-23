@@ -1,0 +1,3 @@
+(λpair fst. fst (pair a b))
+(λa b f. f a b)
+(λp. p (λa b. a))

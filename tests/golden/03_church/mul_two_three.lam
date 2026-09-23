@@ -1,0 +1,8 @@
+(λmul succ zero.
+  (λtwo three. mul two three)
+  (succ (succ zero))
+  (succ (succ (succ zero)))
+)
+(λm n f. m (n f))
+(λn f x. f (n f x))
+(λf x. x)

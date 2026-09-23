@@ -1,0 +1,4 @@
+(λxor true false. xor true false)
+(λa b. a (b (λt f. f) (λt f. t)) b)
+(λt f. t)
+(λt f. f)

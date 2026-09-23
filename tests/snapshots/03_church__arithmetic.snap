@@ -1,0 +1,16 @@
+---
+source: tests/golden.rs
+expression: snapshot_content
+input_file: tests/golden/03_church/arithmetic.lam
+---
+7
+
+term
+  nodes: 61
+  depth: 15
+
+eval
+  steps:    18
+  reduces:  18
+  allocs:   65
+  time:     [time]

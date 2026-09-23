@@ -1,0 +1,2 @@
+(λw f x. w f x)
+(λf x. f x x)

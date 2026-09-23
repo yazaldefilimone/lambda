@@ -1,0 +1,4 @@
+(λor true false. or false true)
+(λp q. p p q)
+(λt f. t)
+(λt f. f)

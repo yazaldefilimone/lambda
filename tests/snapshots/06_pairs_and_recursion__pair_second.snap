@@ -1,0 +1,16 @@
+---
+source: tests/golden.rs
+expression: snapshot_content
+input_file: tests/golden/06_pairs_and_recursion/pair_second.lam
+---
+b
+
+term
+  nodes: 25
+  depth: 8
+
+eval
+  steps:    8
+  reduces:  8
+  allocs:   13
+  time:     [time]

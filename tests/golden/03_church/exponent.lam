@@ -1,0 +1,6 @@
+(λexp two three.
+  exp two three
+)
+(λm n. n m)
+(λf x. f (f x))
+(λf x. f (f (f x)))

@@ -1,0 +1,3 @@
+(λs k. s k k a)
+(λx y z. x z (y z))
+(λx y. x)

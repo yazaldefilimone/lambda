@@ -1,0 +1,16 @@
+---
+source: tests/golden.rs
+expression: snapshot_content
+input_file: tests/golden/01_simple/lazy_omega_drop.lam
+---
+a
+
+term
+  nodes: 15
+  depth: 5
+
+eval
+  steps:    2
+  reduces:  2
+  allocs:   0
+  time:     [time]

@@ -1,0 +1,16 @@
+---
+source: tests/golden.rs
+expression: snapshot_content
+input_file: tests/golden/06_pairs_and_recursion/fibonacci.lam
+---
+2
+
+term
+  nodes: 122
+  depth: 25
+
+eval
+  steps:    237
+  reduces:  237
+  allocs:   305
+  time:     [time]

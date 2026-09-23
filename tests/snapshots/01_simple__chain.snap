@@ -1,0 +1,16 @@
+---
+source: tests/golden.rs
+expression: snapshot_content
+input_file: tests/golden/01_simple/chain.lam
+---
+z
+
+term
+  nodes: 10
+  depth: 5
+
+eval
+  steps:    3
+  reduces:  3
+  allocs:   0
+  time:     [time]

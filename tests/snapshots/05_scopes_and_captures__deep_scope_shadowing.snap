@@ -1,0 +1,16 @@
+---
+source: tests/golden.rs
+expression: snapshot_content
+input_file: tests/golden/05_scopes_and_captures/deep_scope_shadowing.lam
+---
+b b
+
+term
+  nodes: 12
+  depth: 8
+
+eval
+  steps:    3
+  reduces:  3
+  allocs:   5
+  time:     [time]

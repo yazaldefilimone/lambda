@@ -28,7 +28,7 @@ impl<T> std::hash::Hash for Id<T> {
   }
 }
 
-#[derive(Debug, PartialEq, Eq, Hash)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub struct Arena<T> {
   items: Vec<T>,
 }

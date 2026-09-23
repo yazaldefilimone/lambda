@@ -1,0 +1,16 @@
+---
+source: tests/golden.rs
+expression: snapshot_content
+input_file: tests/golden/03_church/list.lam
+---
+6
+
+term
+  nodes: 87
+  depth: 20
+
+eval
+  steps:    40
+  reduces:  40
+  allocs:   161
+  time:     [time]

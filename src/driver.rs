@@ -18,11 +18,41 @@ impl<'a> Driver<'a> {
     Self { ctx }
   }
 
-  pub fn run(&mut self) -> result::Result<()> {
+  pub fn compile_file(&mut self) -> result::Result<TermId> {
     let file = self.load()?;
     let tokens = self.lex(file)?;
+    self.parse(file, &tokens)
+  }
 
-    let term = self.parse(file, &tokens)?;
+  pub fn compile_source(&mut self, name: &str, source: &str) -> result::Result<TermId> {
+    let file = self.ctx.loader.add_virtual(name, source.to_string());
+    let tokens = self.lex(file)?;
+    self.parse(file, &tokens)
+  }
+
+  pub fn evaluate_term(
+    &mut self,
+    term: TermId,
+  ) -> result::Result<(TermId, crate::evaluator::EvalStats)> {
+    let trace = self.ctx.options.trace;
+    let mut strategy_options = crate::evaluator::StrategyOptions::default();
+    strategy_options.limit = self.ctx.options.limit;
+    let mut evaluator = Evaluator::new(self.ctx, strategy_options, trace);
+    let evaluated = evaluator.eval(term)?;
+    Ok((evaluated, evaluator.stats))
+  }
+
+  pub fn run_source(
+    &mut self,
+    name: &str,
+    source: &str,
+  ) -> result::Result<(TermId, crate::evaluator::EvalStats)> {
+    let term = self.compile_source(name, source)?;
+    self.evaluate_term(term)
+  }
+
+  pub fn run(&mut self) -> result::Result<()> {
+    let term = self.compile_file()?;
 
     if self.ctx.options.check {
       return Ok(());
@@ -55,12 +85,7 @@ impl<'a> Driver<'a> {
       }
     }
 
-    let trace = self.ctx.options.trace;
-    let mut strategy_options = crate::evaluator::StrategyOptions::default();
-    strategy_options.limit = self.ctx.options.limit;
-    let mut evaluator = Evaluator::new(self.ctx, strategy_options, trace);
-    let evaluated = evaluator.eval(term)?;
-    let eval_stats = evaluator.stats;
+    let (evaluated, eval_stats) = self.evaluate_term(term)?;
 
     if let Some(encoding) = self.ctx.options.decode {
       match encoding {

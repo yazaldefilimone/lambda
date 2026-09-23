@@ -1,0 +1,16 @@
+---
+source: tests/golden.rs
+expression: snapshot_content
+input_file: tests/golden/02_booleans/not_true.lam
+---
+false
+
+term
+  nodes: 23
+  depth: 9
+
+eval
+  steps:    6
+  reduces:  6
+  allocs:   9
+  time:     [time]

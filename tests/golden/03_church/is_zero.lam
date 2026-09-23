@@ -1,0 +1,3 @@
+(λiszero zero. iszero zero)
+(λn. n (λx t f. f) (λt f. t))
+(λf x. x)

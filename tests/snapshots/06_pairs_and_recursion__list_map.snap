@@ -1,0 +1,16 @@
+---
+source: tests/golden.rs
+expression: snapshot_content
+input_file: tests/golden/06_pairs_and_recursion/list_map.lam
+---
+6
+
+term
+  nodes: 108
+  depth: 25
+
+eval
+  steps:    57
+  reduces:  57
+  allocs:   238
+  time:     [time]

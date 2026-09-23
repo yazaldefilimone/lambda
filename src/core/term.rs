@@ -6,6 +6,7 @@ use crate::{
   symbol::SymbolId,
 };
 
+#[derive(Clone)]
 pub struct Term {
   pub variables: Arena<Variable>,
   pub lambdas: Arena<Lambda>,
@@ -48,6 +49,21 @@ impl Term {
   #[inline(always)]
   pub fn total_terms(&self) -> usize {
     self.variables.len() + self.lambdas.len() + self.applies.len()
+  }
+
+  #[inline(always)]
+  pub fn variable_count(&self) -> usize {
+    self.variables.len()
+  }
+
+  #[inline(always)]
+  pub fn lambda_count(&self) -> usize {
+    self.lambdas.len()
+  }
+
+  #[inline(always)]
+  pub fn apply_count(&self) -> usize {
+    self.applies.len()
   }
 
   pub fn add_variable(&mut self, variable: Variable) -> TermId {

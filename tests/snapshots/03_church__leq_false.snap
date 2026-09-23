@@ -1,0 +1,16 @@
+---
+source: tests/golden.rs
+expression: snapshot_content
+input_file: tests/golden/03_church/leq_false.lam
+---
+false
+
+term
+  nodes: 122
+  depth: 25
+
+eval
+  steps:    80
+  reduces:  80
+  allocs:   264
+  time:     [time]

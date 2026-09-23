@@ -1,0 +1,16 @@
+---
+source: tests/golden.rs
+expression: snapshot_content
+input_file: tests/golden/06_pairs_and_recursion/church_predecessor.lam
+---
+1
+
+term
+  nodes: 73
+  depth: 18
+
+eval
+  steps:    30
+  reduces:  30
+  allocs:   83
+  time:     [time]

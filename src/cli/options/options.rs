@@ -37,6 +37,12 @@ impl Options {
   }
 }
 
+impl Default for Options {
+  fn default() -> Self {
+    Self::new(PathBuf::from("<virtual>"))
+  }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
 pub enum Emit {
   Term,

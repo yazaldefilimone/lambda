@@ -1,0 +1,16 @@
+---
+source: tests/golden.rs
+expression: snapshot_content
+input_file: tests/golden/05_scopes_and_captures/free_var_capture_avoidance.lam
+---
+λx. y
+
+term
+  nodes: 5
+  depth: 4
+
+eval
+  steps:    1
+  reduces:  1
+  allocs:   0
+  time:     [time]

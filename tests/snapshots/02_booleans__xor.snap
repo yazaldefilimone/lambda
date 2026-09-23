@@ -1,0 +1,16 @@
+---
+source: tests/golden.rs
+expression: snapshot_content
+input_file: tests/golden/02_booleans/xor.lam
+---
+true
+
+term
+  nodes: 32
+  depth: 12
+
+eval
+  steps:    9
+  reduces:  9
+  allocs:   16
+  time:     [time]

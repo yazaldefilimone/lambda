@@ -1,0 +1,8 @@
+(λsucc pair left right.
+  λn. left (n (λp. pair (right p) (succ (right p))) (pair (λf r. r) (λf r. r)))
+)
+(λn f x. f (n f x))
+(λa b x. x a b)
+(λp. p (λa b. a))
+(λp. p (λa b. b))
+(λf r. r)

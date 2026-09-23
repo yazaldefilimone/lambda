@@ -1,0 +1,17 @@
+(λY iszero pred add zero one three.
+  (Y (λfib n.
+    iszero n
+      zero
+      (iszero (pred n)
+        one
+        (add (fib (pred n)) (fib (pred (pred n))))
+      )
+  )) three
+)
+(λf. (λx. f (x x)) (λx. f (x x)))
+(λn. n (λx t f. f) (λt f. t))
+(λn f x. n (λg h. h (g f)) (λu. x) (λu. u))
+(λm n f x. m f (n f x))
+(λf x. x)
+(λf x. f x)
+(λf x. f (f (f x)))

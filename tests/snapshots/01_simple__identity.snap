@@ -1,0 +1,16 @@
+---
+source: tests/golden.rs
+expression: snapshot_content
+input_file: tests/golden/01_simple/identity.lam
+---
+y
+
+term
+  nodes: 4
+  depth: 3
+
+eval
+  steps:    1
+  reduces:  1
+  allocs:   0
+  time:     [time]

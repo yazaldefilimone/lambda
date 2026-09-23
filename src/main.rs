@@ -1,23 +1,5 @@
-mod checker;
-mod cli;
-mod context;
-mod core;
-mod decode;
-mod driver;
-mod evaluator;
-mod loader;
-mod messages;
-mod parser;
-mod printer;
-mod result;
-mod source;
-mod stats;
-mod symbol;
-
 use clap::Parser as ClapParser;
-use cli::Cli;
-use context::Context;
-use driver::Driver;
+use lambdac::{cli::Cli, context::Context, driver::Driver};
 
 fn main() {
   let cli = Cli::parse();

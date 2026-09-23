@@ -1,0 +1,8 @@
+(λadd mult one two three.
+  add (mult two three) one
+)
+(λm n f x. m f (n f x))
+(λm n f. m (n f))
+(λf x. f x)
+(λf x. f (f x))
+(λf x. f (f (f x)))

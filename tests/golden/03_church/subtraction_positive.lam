@@ -1,0 +1,18 @@
+(λpair fst snd succ zero.
+  (λpred.
+    (λsub.
+      (λtwo five.
+        sub five two
+      )
+      (succ (succ zero))
+      (succ (succ (succ (succ (succ zero)))))
+    )
+    (λm n. n pred m)
+  )
+  (λn. fst (n (λp. pair (snd p) (succ (snd p))) (pair zero zero)))
+)
+(λa b f. f a b)
+(λp. p (λa b. a))
+(λp. p (λa b. b))
+(λn f x. f (n f x))
+(λf x. x)

@@ -1,0 +1,16 @@
+---
+source: tests/golden.rs
+expression: snapshot_content
+input_file: tests/golden/05_scopes_and_captures/barendregt_deep_shift.lam
+---
+b
+
+term
+  nodes: 13
+  depth: 7
+
+eval
+  steps:    4
+  reduces:  4
+  allocs:   8
+  time:     [time]

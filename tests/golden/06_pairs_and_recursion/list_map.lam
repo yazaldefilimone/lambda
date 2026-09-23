@@ -1,0 +1,16 @@
+(λcons nil succ add zero one two.
+  (λmap.
+    (λlist.
+      (map succ list) add zero
+    )
+    (cons zero (cons one (cons two nil)))
+  )
+  (λf xs c n. xs (λh. c (f h)) n)
+)
+(λh t c n. c h (t c n))
+(λc n. n)
+(λn f x. f (n f x))
+(λm n f x. m f (n f x))
+(λf x. x)
+(λf x. f x)
+(λf x. f (f x))

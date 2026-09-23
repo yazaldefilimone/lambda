@@ -1,0 +1,16 @@
+---
+source: tests/golden.rs
+expression: snapshot_content
+input_file: tests/golden/04_combinators/kleene_pred.lam
+---
+3
+
+term
+  nodes: 36
+  depth: 13
+
+eval
+  steps:    15
+  reduces:  15
+  allocs:   48
+  time:     [time]

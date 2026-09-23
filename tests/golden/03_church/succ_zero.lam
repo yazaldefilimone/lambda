@@ -1,0 +1,3 @@
+(λsucc zero. succ zero)
+(λn f x. f (n f x))
+(λf x. x)

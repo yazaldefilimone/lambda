@@ -15,11 +15,12 @@ use crate::{
 };
 use strategy::Strategy;
 
-#[derive(Debug, Clone, Copy, Default)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub struct EvalStats {
   pub steps: usize,
   pub reductions: usize,
   pub created_terms: usize,
+  pub max_spine_depth: usize,
   pub duration: Duration,
 }
 
@@ -111,6 +112,9 @@ impl<'a> Evaluator<'a> {
       let apply = *self.ctx.terms.applies.get(apply_id);
       self.spine.push(apply.argument);
       term = apply.function;
+    }
+    if self.spine.len() > self.stats.max_spine_depth {
+      self.stats.max_spine_depth = self.spine.len();
     }
     term
   }

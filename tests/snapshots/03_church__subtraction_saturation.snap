@@ -1,0 +1,16 @@
+---
+source: tests/golden.rs
+expression: snapshot_content
+input_file: tests/golden/03_church/subtraction_saturation.lam
+---
+false
+
+term
+  nodes: 102
+  depth: 21
+
+eval
+  steps:    103
+  reduces:  103
+  allocs:   235
+  time:     [time]

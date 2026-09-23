@@ -1,0 +1,16 @@
+---
+source: tests/golden.rs
+expression: snapshot_content
+input_file: tests/golden/03_church/succ_zero.lam
+---
+1
+
+term
+  nodes: 20
+  depth: 9
+
+eval
+  steps:    5
+  reduces:  5
+  allocs:   8
+  time:     [time]

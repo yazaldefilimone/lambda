@@ -1,0 +1,4 @@
+(λadd succ zero. add (succ (succ zero)) (succ zero))
+(λm n f x. m f (n f x))
+(λn f x. f (n f x))
+(λf x. x)
