@@ -10,10 +10,12 @@ license = "Apache-2.0"
 [[bin]]
 name = "lambdac"
 path = "src/main.rs"
+bench = false
 
 [lib]
 name = "lambdac"
 path = "src/lib.rs"
+bench = false
 
 [dependencies]
 clap = { version = "4.5.9", features = ["derive"] }
