@@ -94,11 +94,7 @@ impl Cli {
       .or(self.input_flag)
       .expect("input file is required");
 
-    let color = if self.no_color {
-      ColorChoice::Never
-    } else {
-      self.color
-    };
+    let color = if self.no_color { ColorChoice::Never } else { self.color };
 
     Options {
       input,

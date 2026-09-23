@@ -2,14 +2,10 @@ use std::fs;
 use std::hint::black_box;
 
 use criterion::{Criterion, Throughput, criterion_group, criterion_main};
-use lambdac::{
-  parser::lexer::Lexer,
-  source::file::FileId,
-  symbol::interner::Interner,
-};
+use lambdac::{parser::lexer::Lexer, source::file::FileId, symbol::interner::Interner};
 
-fn bench_lexer(c: &mut Criterion) {
-  let mut group = c.benchmark_group("lexer");
+fn bench_lex(c: &mut Criterion) {
+  let mut group = c.benchmark_group("lex");
 
   let benchmarks = [
     ("pred", "examples/church/pred.lam"),
@@ -36,5 +32,5 @@ fn bench_lexer(c: &mut Criterion) {
   group.finish();
 }
 
-criterion_group!(benches, bench_lexer);
+criterion_group!(benches, bench_lex);
 criterion_main!(benches);

@@ -174,7 +174,10 @@ impl<'a> Evaluator<'a> {
     let new_lambda = Lambda { body: normalized_body };
     let parameter = self.ctx.terms.parameter(lambda_id);
     let annotation = self.ctx.terms.annotation(lambda_id);
-    let new_id = self.ctx.terms.add_annotated(new_lambda, parameter, annotation);
+    let new_id = self
+      .ctx
+      .terms
+      .add_annotated(new_lambda, parameter, annotation);
     Ok(new_id)
   }
 

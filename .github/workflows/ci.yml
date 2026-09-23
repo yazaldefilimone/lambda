@@ -1,4 +1,4 @@
-name: CI
+name: ci
 
 on:
   push:
@@ -6,22 +6,44 @@ on:
   pull_request:
     branches: [main]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  test:
-    name: Test & Performance Invariants
+  fmt:
+    name: fmt
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: checkout
         uses: actions/checkout@v4
 
-      - name: Setup Rust toolchain
+      - name: toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+
+      - name: fmt
+        run: cargo fmt --check
+
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+
+      - name: toolchain
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Check code
+      - name: cache
+        uses: Swatinem/rust-cache@v2
+
+      - name: check
         run: cargo check --all-targets
 
-      - name: Run tests & deterministic perf regressions
-        run: cargo test --verbose
+      - name: test
+        run: cargo test
 
-      - name: Verify benchmarks compile
+      - name: bench
         run: cargo bench -- --test

@@ -1,7 +1,7 @@
 use std::fs;
 use std::hint::black_box;
 
-use criterion::{Criterion, Throughput, criterion_group, criterion_main};
+use criterion::{Criterion, criterion_group, criterion_main};
 use lambdac::{
   core::{Term, Type},
   messages::Messages,
@@ -10,8 +10,8 @@ use lambdac::{
   symbol::interner::Interner,
 };
 
-fn bench_parser(c: &mut Criterion) {
-  let mut group = c.benchmark_group("parser");
+fn bench_parse(c: &mut Criterion) {
+  let mut group = c.benchmark_group("parse");
 
   let benchmarks = [
     ("pred", "examples/church/pred.lam"),
@@ -26,8 +26,6 @@ fn bench_parser(c: &mut Criterion) {
     let mut symbols = Interner::new();
     let mut lexer = Lexer::new(&source, FileId(0), &mut symbols);
     let tokens = lexer.tokenize();
-
-    group.throughput(Throughput::Elements(tokens.len() as u64));
 
     group.bench_function(name, |b| {
       b.iter(|| {
@@ -44,5 +42,5 @@ fn bench_parser(c: &mut Criterion) {
   group.finish();
 }
 
-criterion_group!(benches, bench_parser);
+criterion_group!(benches, bench_parse);
 criterion_main!(benches);

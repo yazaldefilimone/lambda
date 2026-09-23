@@ -27,13 +27,13 @@ insta = { version = "1.42", features = ["glob", "yaml"] }
 walkdir = "2.5.0"
 
 [[bench]]
-name = "evaluator"
+name = "eval"
 harness = false
 
 [[bench]]
-name = "lexer"
+name = "lex"
 harness = false
 
 [[bench]]
-name = "parser"
+name = "parse"
 harness = false

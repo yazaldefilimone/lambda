@@ -4,8 +4,8 @@ use std::path::PathBuf;
 use criterion::{Criterion, criterion_group, criterion_main};
 use lambdac::{cli::options::Options, context::Context, driver::Driver};
 
-fn bench_evaluator(c: &mut Criterion) {
-  let mut group = c.benchmark_group("evaluator");
+fn bench_eval(c: &mut Criterion) {
+  let mut group = c.benchmark_group("eval");
 
   let benchmarks = [
     ("pred", "examples/church/pred.lam"),
@@ -36,5 +36,5 @@ fn bench_evaluator(c: &mut Criterion) {
   group.finish();
 }
 
-criterion_group!(benches, bench_evaluator);
+criterion_group!(benches, bench_eval);
 criterion_main!(benches);
