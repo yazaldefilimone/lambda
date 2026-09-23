@@ -1,0 +1,27 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Test & Performance Invariants
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Check code
+        run: cargo check --all-targets
+
+      - name: Run tests & deterministic perf regressions
+        run: cargo test --verbose
+
+      - name: Verify benchmarks compile
+        run: cargo bench -- --test
