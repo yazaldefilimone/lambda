@@ -3,7 +3,7 @@ pub mod options;
 use clap::Parser;
 use std::path::PathBuf;
 
-use self::options::{Emit, Encoding, Options};
+use self::options::{ColorChoice, Emit, Encoding, Options};
 
 #[derive(Debug, Parser)]
 #[command(
@@ -74,6 +74,15 @@ pub struct Cli {
   #[arg(short = 'q', long, help = "Quiet output")]
   pub quiet: bool,
 
+  #[arg(
+    long,
+    value_name = "WHEN",
+    default_value = "auto",
+    value_enum,
+    help = "Coloring: auto, always, never"
+  )]
+  pub color: ColorChoice,
+
   #[arg(long, help = "Disable color output")]
   pub no_color: bool,
 }
@@ -84,6 +93,12 @@ impl Cli {
       .input
       .or(self.input_flag)
       .expect("input file is required");
+
+    let color = if self.no_color {
+      ColorChoice::Never
+    } else {
+      self.color
+    };
 
     Options {
       input,
@@ -96,7 +111,7 @@ impl Cli {
       limit: self.limit,
       verbose: self.verbose,
       quiet: self.quiet,
-      no_color: self.no_color,
+      color,
     }
   }
 }
