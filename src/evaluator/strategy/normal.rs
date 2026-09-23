@@ -20,17 +20,15 @@ pub fn reduce(
           Ok(result)
         },
         _ => {
-          let function_step = reduce(apply.function, ctx, options)?;
-          if let Some(new_function) = function_step {
-            let new_apply = Apply { function: new_function, argument: apply.argument };
+          if let Some(function) = reduce(apply.function, ctx, options)? {
+            let new_apply = Apply { function, argument: apply.argument };
             let new_id = ctx.terms.add_apply(new_apply);
             let result = Some(new_id);
             return Ok(result);
           }
 
-          let argument_step = reduce(apply.argument, ctx, options)?;
-          if let Some(new_argument) = argument_step {
-            let new_apply = Apply { function: apply.function, argument: new_argument };
+          if let Some(argument) = reduce(apply.argument, ctx, options)? {
+            let new_apply = Apply { function: apply.function, argument };
             let new_id = ctx.terms.add_apply(new_apply);
             let result = Some(new_id);
             return Ok(result);
