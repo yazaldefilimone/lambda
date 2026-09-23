@@ -1,11 +1,17 @@
 use crate::{
-  context::Context,
+  context::{Context, Redex},
   core::{LambdaId, TermId},
   evaluator::substitute,
   result,
 };
 
 pub fn reduce(ctx: &mut Context, lambda_id: LambdaId, argument: TermId) -> result::Result<TermId> {
+  if ctx.options.trace {
+    let variable = ctx.terms.parameter(lambda_id);
+    ctx.redex_scope.clear();
+    ctx.redex_scope.extend_from_slice(&ctx.current_scope);
+    ctx.redex = Some(Redex { lambda: lambda_id, argument, variable });
+  }
   let lambda = *ctx.terms.lambdas.get(lambda_id);
   let result = substitute::substitute(ctx, 0, argument, lambda.body);
   Ok(result)

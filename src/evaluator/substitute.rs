@@ -37,7 +37,9 @@ fn shift_lambda(ctx: &mut Context, term: TermId, id: LambdaId, delta: i32, cutof
     return term;
   }
   let new_lambda = Lambda { body: new_body };
-  ctx.terms.add_lambda(new_lambda)
+  let parameter = ctx.terms.parameter(id);
+  let annotation = ctx.terms.annotation(id);
+  ctx.terms.add_annotated(new_lambda, parameter, annotation)
 }
 
 fn shift_apply(ctx: &mut Context, term: TermId, id: ApplyId, delta: i32, cutoff: u32) -> TermId {
@@ -90,7 +92,9 @@ fn substitute_lambda(
     return term;
   }
   let new_lambda = Lambda { body: new_body };
-  ctx.terms.add_lambda(new_lambda)
+  let parameter = ctx.terms.parameter(id);
+  let annotation = ctx.terms.annotation(id);
+  ctx.terms.add_annotated(new_lambda, parameter, annotation)
 }
 
 fn substitute_apply(

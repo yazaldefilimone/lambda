@@ -3,7 +3,7 @@ source: tests/golden.rs
 expression: snapshot_content
 input_file: tests/golden/01_simple/full_normal_form_under_binder.lam
 ---
-λx. λy. y x
+λx. λz. z x
 
 term
   nodes: 8

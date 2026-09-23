@@ -11,6 +11,7 @@ pub struct Term {
   pub variables: Arena<Variable>,
   pub lambdas: Arena<Lambda>,
   pub applies: Arena<Apply>,
+  pub parameters: Arena<Option<SymbolId>>,
   pub annotations: Arena<Option<TypeId>>,
   pub free_variables: Vec<SymbolId>,
   variable_cache: Vec<Option<TermId>>,
@@ -38,6 +39,7 @@ impl Term {
       variables: Arena::new(),
       lambdas: Arena::new(),
       applies: Arena::new(),
+      parameters: Arena::new(),
       annotations: Arena::new(),
       free_variables: Vec::new(),
       variable_cache: Vec::with_capacity(32),
@@ -81,23 +83,35 @@ impl Term {
     id
   }
 
+  #[allow(dead_code)]
   pub fn add_lambda(&mut self, lambda: Lambda) -> TermId {
-    self.add_annotated(lambda, None)
+    self.add_annotated(lambda, None, None)
   }
 
-  pub fn add_annotated(&mut self, lambda: Lambda, annotation: Option<TypeId>) -> TermId {
+  pub fn add_annotated(
+    &mut self,
+    lambda: Lambda,
+    parameter: Option<SymbolId>,
+    annotation: Option<TypeId>,
+  ) -> TermId {
     if annotation.is_none()
+      && parameter.is_none()
       && let Some(&id) = self.lambda_cache.get(&lambda.body)
     {
       return id;
     }
     let index = self.lambdas.add(lambda);
+    self.parameters.add(parameter);
     self.annotations.add(annotation);
     let id = TermId::lambda(index);
-    if annotation.is_none() {
+    if annotation.is_none() && parameter.is_none() {
       self.lambda_cache.insert(lambda.body, id);
     }
     id
+  }
+
+  pub fn parameter(&self, id: LambdaId) -> Option<SymbolId> {
+    *self.parameters.get(Id::new(id.index()))
   }
 
   pub fn annotation(&self, id: LambdaId) -> Option<TypeId> {

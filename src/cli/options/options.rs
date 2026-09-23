@@ -1,6 +1,13 @@
 use clap::ValueEnum;
 use std::path::PathBuf;
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+pub enum ColorChoice {
+  Auto,
+  Always,
+  Never,
+}
+
 #[derive(Debug, Clone)]
 pub struct Options {
   pub input: PathBuf,
@@ -14,8 +21,7 @@ pub struct Options {
   pub limit: usize,
   pub verbose: bool,
   pub quiet: bool,
-  #[allow(dead_code)]
-  pub no_color: bool,
+  pub color: ColorChoice,
 }
 
 impl Options {
@@ -32,7 +38,7 @@ impl Options {
       limit: 10000,
       verbose: false,
       quiet: false,
-      no_color: false,
+      color: ColorChoice::Auto,
     }
   }
 }

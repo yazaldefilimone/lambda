@@ -10,8 +10,8 @@ use crate::{
   context::Context,
   core::{Apply, Lambda, LambdaId, TermId},
   error,
-  printer::Printer,
   result::{self, Failed},
+  trace::{Reduction, ReductionRule, TextTracer},
 };
 use strategy::Strategy;
 
@@ -29,6 +29,7 @@ pub struct Evaluator<'a> {
   strategy: strategy::Strategy,
   trace: bool,
   spine: Vec<TermId>,
+  tracer: Option<TextTracer>,
   pub stats: EvalStats,
 }
 
@@ -41,7 +42,8 @@ impl<'a> Evaluator<'a> {
     let strategy = Strategy::new(strategy_options);
     let stats = EvalStats::default();
     let spine = Vec::with_capacity(128);
-    Self { ctx, strategy, trace, spine, stats }
+    let tracer = if trace { Some(TextTracer::new(ctx)) } else { None };
+    Self { ctx, strategy, trace, spine, tracer, stats }
   }
 
   pub fn eval(&mut self, mut term: TermId) -> result::Result<TermId> {
@@ -71,11 +73,22 @@ impl<'a> Evaluator<'a> {
       let Some(next) = next_opt else {
         self.stats.duration = start.elapsed();
         self.stats.created_terms = self.ctx.terms.total_terms().saturating_sub(initial_terms);
+        if let Some(tracer) = &mut self.tracer {
+          tracer.on_finish(self.ctx, term);
+        }
         return Ok(term);
       };
 
-      if self.trace {
-        self.debug_step(term, next);
+      if let Some(tracer) = &mut self.tracer {
+        let redex = self.ctx.redex.take();
+        let reduction = Reduction {
+          step: steps + 1,
+          rule: ReductionRule::Beta,
+          before: term,
+          after: next,
+          redex,
+        };
+        tracer.on_step(self.ctx, &reduction);
       }
 
       term = next;
@@ -159,7 +172,9 @@ impl<'a> Evaluator<'a> {
       return Ok(term);
     }
     let new_lambda = Lambda { body: normalized_body };
-    let new_id = self.ctx.terms.add_lambda(new_lambda);
+    let parameter = self.ctx.terms.parameter(lambda_id);
+    let annotation = self.ctx.terms.annotation(lambda_id);
+    let new_id = self.ctx.terms.add_annotated(new_lambda, parameter, annotation);
     Ok(new_id)
   }
 
@@ -173,12 +188,5 @@ impl<'a> Evaluator<'a> {
       term = self.ctx.terms.add_apply(new_apply);
     }
     Ok(term)
-  }
-
-  fn debug_step(&self, term: TermId, next: TermId) {
-    let printer = Printer::new(self.ctx);
-    let term_str = printer.print_term(term);
-    let next_str = printer.print_term(next);
-    eprintln!("{term_str} -> {next_str}");
   }
 }

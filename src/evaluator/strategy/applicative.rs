@@ -17,47 +17,48 @@ pub fn reduce(
       if let Some(function) = reduce(apply.function, ctx, options)? {
         let new_apply = Apply { function, argument: apply.argument };
         let new_id = ctx.terms.add_apply(new_apply);
-        let result = Some(new_id);
-        return Ok(result);
+        return Ok(Some(new_id));
       }
 
       if let Some(argument) = reduce(apply.argument, ctx, options)? {
         let new_apply = Apply { function: apply.function, argument };
         let new_id = ctx.terms.add_apply(new_apply);
-        let result = Some(new_id);
-        return Ok(result);
+        return Ok(Some(new_id));
       }
 
       if let Some(lambda_id) = apply.function.as_lambda() {
         let reduced = beta::reduce(ctx, lambda_id, apply.argument)?;
-        let result = Some(reduced);
-        return Ok(result);
+        return Ok(Some(reduced));
       }
 
-      let result = None;
-      Ok(result)
+      Ok(None)
     },
     TermKind::Lambda(id) => {
       if options.lazy {
-        let result = None;
-        return Ok(result);
+        return Ok(None);
+      }
+
+      if ctx.options.trace {
+        ctx.current_scope.push(id);
       }
 
       let lambda = *ctx.terms.lambdas.get(id);
       let body_step = reduce(lambda.body, ctx, options)?;
-      if let Some(new_body) = body_step {
-        let new_lambda = Lambda { body: new_body };
-        let new_id = ctx.terms.add_lambda(new_lambda);
-        let result = Some(new_id);
-        return Ok(result);
+
+      if ctx.options.trace {
+        ctx.current_scope.pop();
       }
 
-      let result = None;
-      Ok(result)
+      if let Some(new_body) = body_step {
+        let new_lambda = Lambda { body: new_body };
+        let parameter = ctx.terms.parameter(id);
+        let annotation = ctx.terms.annotation(id);
+        let new_id = ctx.terms.add_annotated(new_lambda, parameter, annotation);
+        return Ok(Some(new_id));
+      }
+
+      Ok(None)
     },
-    TermKind::Variable(_) => {
-      let result = None;
-      Ok(result)
-    },
+    TermKind::Variable(_) => Ok(None),
   }
 }

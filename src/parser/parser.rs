@@ -65,9 +65,11 @@ impl<'a> Parser<'a> {
     }
 
     let mut current = body;
-    for (_, annotation) in parameters.into_iter().rev() {
+    for (param_name, annotation) in parameters.into_iter().rev() {
       let lambda = Lambda { body: current };
-      current = self.terms.add_annotated(lambda, annotation);
+      current = self
+        .terms
+        .add_annotated(lambda, Some(param_name), annotation);
     }
 
     Ok(current)

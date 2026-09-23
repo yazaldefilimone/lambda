@@ -3,7 +3,7 @@ source: tests/golden.rs
 expression: snapshot_content
 input_file: tests/golden/04_combinators/w_combinator.lam
 ---
-λx. λy. x y y
+λf. λx. f x x
 
 term
   nodes: 16
@@ -12,5 +12,5 @@ term
 eval
   steps:    3
   reduces:  3
-  allocs:   7
+  allocs:   9
   time:     [time]

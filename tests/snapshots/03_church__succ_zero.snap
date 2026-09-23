@@ -12,5 +12,5 @@ term
 eval
   steps:    5
   reduces:  5
-  allocs:   8
+  allocs:   10
   time:     [time]
