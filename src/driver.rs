@@ -119,6 +119,15 @@ impl<'a> Driver<'a> {
       return Ok(());
     }
 
+    if self.ctx.options.trace {
+      if let Some(term_stats) = term_stats {
+        println!();
+        let stats = crate::stats::Stats::new(term_stats, eval_stats);
+        stats.print();
+      }
+      return Ok(());
+    }
+
     if let Some(term_stats) = term_stats {
       if self.ctx.options.verbose {
         let printer = Printer::new(self.ctx);

@@ -13,3 +13,4 @@ pub mod result;
 pub mod source;
 pub mod stats;
 pub mod symbol;
+pub mod trace;
