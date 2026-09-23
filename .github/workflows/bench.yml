@@ -19,6 +19,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -26,5 +28,5 @@ jobs:
       - name: Run Criterion Compare
         uses: boa-dev/criterion-compare-action@v3
         with:
-          branch: main
+          branchName: ${{ github.base_ref || 'main' }}
           token: ${{ secrets.GITHUB_TOKEN }}
