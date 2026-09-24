@@ -57,7 +57,7 @@ pub struct Cli {
     long,
     value_name = "TYPE",
     value_enum,
-    help = "Preferred type when decoding ambiguous values (number, boolean, list, pair)"
+    help = "Preferred type when decoding ambiguous values (number, boolean)"
   )]
   pub prefer: Option<DecodePreference>,
 

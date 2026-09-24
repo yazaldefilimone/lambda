@@ -72,6 +72,4 @@ pub enum DecodePreference {
   Number,
   #[value(alias = "bool")]
   Boolean,
-  List,
-  Pair,
 }

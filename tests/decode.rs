@@ -21,7 +21,7 @@ fn eval_and_decode(code: &str, prefer: Option<DecodePreference>) -> String {
 
 #[test]
 fn test_church_zero_ambiguity_resolution() {
-  // Church zero / false / empty list representation: \f x. x
+  // Church zero / false representation: \f x. x
   let code = "(λf x. x)";
 
   // Default preference (bool first)
@@ -32,9 +32,6 @@ fn test_church_zero_ambiguity_resolution() {
 
   // Prefer boolean
   assert_eq!(eval_and_decode(code, Some(DecodePreference::Boolean)), "false");
-
-  // Prefer list
-  assert_eq!(eval_and_decode(code, Some(DecodePreference::List)), "[]");
 }
 
 #[test]
@@ -62,9 +59,6 @@ fn test_nested_decode_with_preference() {
 
   // With boolean preference, pair contents are decoded as booleans
   assert_eq!(eval_and_decode(pair_code, Some(DecodePreference::Boolean)), "(false, false)");
-
-  // With list preference, pair contents are decoded as lists
-  assert_eq!(eval_and_decode(pair_code, Some(DecodePreference::List)), "([], [])");
 }
 
 #[test]
@@ -88,11 +82,7 @@ fn test_cli_prefer_parsing() {
   let opts = cli.into_options();
   assert_eq!(opts.prefer, Some(DecodePreference::Boolean));
 
-  let cli = Cli::try_parse_from(["lambdac", "file.lam", "--prefer", "list"]).unwrap();
+  let cli = Cli::try_parse_from(["lambdac", "file.lam", "--prefer", "boolean"]).unwrap();
   let opts = cli.into_options();
-  assert_eq!(opts.prefer, Some(DecodePreference::List));
-
-  let cli = Cli::try_parse_from(["lambdac", "file.lam", "--prefer", "pair"]).unwrap();
-  let opts = cli.into_options();
-  assert_eq!(opts.prefer, Some(DecodePreference::Pair));
+  assert_eq!(opts.prefer, Some(DecodePreference::Boolean));
 }
