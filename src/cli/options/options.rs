@@ -16,6 +16,7 @@ pub struct Options {
   pub check: bool,
   pub emit: Option<Emit>,
   pub decode: Option<Encoding>,
+  pub prefer: Option<DecodePreference>,
   pub trace: bool,
   pub stats: bool,
   pub limit: usize,
@@ -33,6 +34,7 @@ impl Options {
       check: false,
       emit: None,
       decode: None,
+      prefer: None,
       trace: false,
       stats: false,
       limit: 10000,
@@ -62,4 +64,12 @@ pub enum Encoding {
   Church,
   Scott,
   Boehm,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+pub enum DecodePreference {
+  #[value(alias = "int", alias = "nat")]
+  Number,
+  #[value(alias = "bool")]
+  Boolean,
 }
