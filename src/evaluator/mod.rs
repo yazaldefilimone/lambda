@@ -1,4 +1,5 @@
 pub mod beta;
+pub mod nbe;
 pub mod strategy;
 pub mod substitute;
 
@@ -51,7 +52,13 @@ impl<'a> Evaluator<'a> {
     let start = Instant::now();
 
     if !self.trace && self.strategy.options.kind == strategy::StrategyKind::Normal {
-      let result = self.normalize(term);
+      // Weak-head (`lazy`) stays on the spine normalizer, which stops under
+      // binders; every other normal-order run normalizes through NbE.
+      let result = if self.strategy.options.lazy {
+        self.normalize_spine(term)
+      } else {
+        self.normalize_nbe(term)
+      };
       self.stats.duration = start.elapsed();
       self.stats.created_terms = self.ctx.terms.total_terms().saturating_sub(initial_terms);
       return result;
@@ -98,7 +105,15 @@ impl<'a> Evaluator<'a> {
     }
   }
 
-  fn normalize(&mut self, mut term: TermId) -> result::Result<TermId> {
+  fn normalize_nbe(&mut self, term: TermId) -> result::Result<TermId> {
+    let limit = self.strategy.options.limit;
+    let (result, reductions) = nbe::normalize(self.ctx, term, limit)?;
+    self.stats.steps = reductions;
+    self.stats.reductions = reductions;
+    Ok(result)
+  }
+
+  fn normalize_spine(&mut self, mut term: TermId) -> result::Result<TermId> {
     let spine_base = self.spine.len();
 
     loop {
@@ -167,7 +182,7 @@ impl<'a> Evaluator<'a> {
       return Ok(term);
     }
     let lambda = *self.ctx.terms.lambdas.get(lambda_id);
-    let normalized_body = self.normalize(lambda.body)?;
+    let normalized_body = self.normalize_spine(lambda.body)?;
     if normalized_body == lambda.body {
       return Ok(term);
     }
@@ -186,7 +201,7 @@ impl<'a> Evaluator<'a> {
       let Some(argument) = self.spine.pop() else {
         break;
       };
-      let normalized_argument = self.normalize(argument)?;
+      let normalized_argument = self.normalize_spine(argument)?;
       let new_apply = Apply { function: term, argument: normalized_argument };
       term = self.ctx.terms.add_apply(new_apply);
     }
