@@ -1,7 +1,8 @@
 use crate::{
   core::{
-    TermView, TypeId,
+    TypeId, View,
     arena::{Arena, Id},
+    cache::TermCache,
   },
   symbol::SymbolId,
 };
@@ -14,12 +15,10 @@ pub struct Term {
   pub parameters: Arena<Option<SymbolId>>,
   pub annotations: Arena<Option<TypeId>>,
   pub free_variables: Vec<SymbolId>,
-  variable_cache: Vec<Option<TermId>>,
-  lambda_cache: rustc_hash::FxHashMap<TermId, TermId>,
-  apply_cache: rustc_hash::FxHashMap<(TermId, TermId), TermId>,
+  cache: TermCache,
 }
 
-impl TermView for Term {
+impl View for Term {
   fn variable(&self, id: VariableId) -> &Variable {
     self.variables.get(id)
   }
@@ -42,9 +41,7 @@ impl Term {
       parameters: Arena::new(),
       annotations: Arena::new(),
       free_variables: Vec::new(),
-      variable_cache: Vec::with_capacity(32),
-      lambda_cache: rustc_hash::FxHashMap::default(),
-      apply_cache: rustc_hash::FxHashMap::default(),
+      cache: TermCache::with_capacity(32),
     }
   }
 
@@ -69,17 +66,12 @@ impl Term {
   }
 
   pub fn add_variable(&mut self, variable: Variable) -> TermId {
-    let idx = variable.index as usize;
-    if idx < self.variable_cache.len() {
-      if let Some(id) = self.variable_cache[idx] {
-        return id;
-      }
-    } else {
-      self.variable_cache.resize(idx + 1, None);
+    if let Some(id) = self.cache.variable(variable.index) {
+      return id;
     }
     let index = self.variables.add(variable);
     let id = TermId::variable(index);
-    self.variable_cache[idx] = Some(id);
+    self.cache.set_variable(variable.index, id);
     id
   }
 
@@ -94,19 +86,20 @@ impl Term {
     parameter: Option<SymbolId>,
     annotation: Option<TypeId>,
   ) -> TermId {
-    if annotation.is_none()
-      && parameter.is_none()
-      && let Some(&id) = self.lambda_cache.get(&lambda.body)
-    {
+    let interned = annotation.is_none() && parameter.is_none();
+    if interned && let Some(id) = self.cache.lambda(lambda.body) {
       return id;
     }
+
     let index = self.lambdas.add(lambda);
     self.parameters.add(parameter);
     self.annotations.add(annotation);
     let id = TermId::lambda(index);
-    if annotation.is_none() && parameter.is_none() {
-      self.lambda_cache.insert(lambda.body, id);
+
+    if interned {
+      self.cache.set_lambda(lambda.body, id);
     }
+
     id
   }
 
@@ -119,13 +112,12 @@ impl Term {
   }
 
   pub fn add_apply(&mut self, apply: Apply) -> TermId {
-    let key = (apply.function, apply.argument);
-    if let Some(&id) = self.apply_cache.get(&key) {
+    if let Some(id) = self.cache.apply(apply.function, apply.argument) {
       return id;
     }
     let index = self.applies.add(apply);
     let id = TermId::apply(index);
-    self.apply_cache.insert(key, id);
+    self.cache.set_apply(apply.function, apply.argument, id);
     id
   }
 }
@@ -147,6 +139,15 @@ pub enum TermKind {
 impl TermId {
   pub const KIND_MASK: u32 = 0b11 << 30;
   pub const INDEX_MASK: u32 = !Self::KIND_MASK;
+
+  /// Reserved id that marks an empty cache slot. Tag `3` is produced by no
+  /// constructor, so it can never collide with a real node.
+  pub(crate) const EMPTY: Self = Self(3 << 30);
+
+  #[inline(always)]
+  pub(crate) fn raw(self) -> u32 {
+    self.0
+  }
 
   #[inline(always)]
   pub fn variable(id: VariableId) -> Self {
